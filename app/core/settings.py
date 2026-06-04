@@ -1,0 +1,59 @@
+"""
+Centralised configuration loaded from environment variables / .env file.
+
+Reads the .env file once at import time and exposes a singleton `settings`
+object used throughout the application.
+"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env from the project root (two levels up from this file)
+_env_path = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(_env_path)
+
+
+def _parse_int_list(raw: str) -> list[int]:
+    """Parse a comma-separated string of ints (e.g. '0,1,2,3,4,5')."""
+    return [int(x.strip()) for x in raw.split(",") if x.strip()]
+
+
+class Settings:
+    """Application‑wide settings sourced from environment variables."""
+
+    # ── LLM ────────────────────────────────────────────────
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME", "gpt-4o-mini")
+    LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.3"))
+
+    # ── App ────────────────────────────────────────────────
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
+
+    # ── Security ───────────────────────────────────────────
+    ADMIN_API_KEY: str = os.getenv("ADMIN_API_KEY", "dev_secret_key_123")
+    CHAT_RATE_LIMIT_PER_MINUTE: int = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "60"))
+
+    # ── Database ───────────────────────────────────────────
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./receptionist.db")
+
+    # ── Google Calendar ────────────────────────────────────
+    GOOGLE_SERVICE_ACCOUNT_FILE: str = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "")
+    GOOGLE_CALENDAR_ID: str = os.getenv("GOOGLE_CALENDAR_ID", "primary")
+
+    # ── Business Rules ─────────────────────────────────────
+    BUSINESS_TIMEZONE: str = os.getenv("BUSINESS_TIMEZONE", "Asia/Karachi")
+    BUSINESS_HOURS_START: int = int(os.getenv("BUSINESS_HOURS_START", "9"))
+    BUSINESS_HOURS_END: int = int(os.getenv("BUSINESS_HOURS_END", "19"))
+    BUSINESS_DAYS: list[int] = _parse_int_list(
+        os.getenv("BUSINESS_DAYS", "0,1,2,3,4,5")  # Mon–Sat
+    )
+    BOOKING_BUFFER_MINUTES: int = int(os.getenv("BOOKING_BUFFER_MINUTES", "15"))
+    DEFAULT_SLOT_WINDOW_DAYS: int = int(os.getenv("DEFAULT_SLOT_WINDOW_DAYS", "14"))
+
+
+settings = Settings()
+
