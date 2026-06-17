@@ -1,7 +1,8 @@
-# Poitola — AI Receptionist
+# Aura — Intelligent AI Receptionist
 
-Conversational AI receptionist for **service businesses** (clinics, salons,
-co‑working spaces). Built with **FastAPI** + **LangChain** + **React** + **Google Calendar** + **ML no‑show prediction**.
+Aura is a professional, conversational AI receptionist built for modern service businesses (clinics, salons, wellness studios, and co-working spaces). By blending natural language understanding with direct system integrations, Aura automates appointment booking, handles client inquiries with human-like warmth, and uses machine learning to predict and minimize no-show risks.
+
+Built using **FastAPI**, **LangChain**, **React**, **Google Calendar API**, and a custom **Scikit-Learn** predictive pipeline.
 
 ---
 

@@ -177,7 +177,7 @@ export default function App() {
       <header className="app-header">
         <a className="logo" onClick={() => setCurrentView('home')}>
           <Zap size={20} />
-          <span>Poitola</span>
+          <span>Aura</span>
         </a>
         <nav className="nav-links">
           {currentView === 'admin' ? (
@@ -435,7 +435,7 @@ export default function App() {
             <div className="chat-header-info">
               <div className="chat-avatar">✦</div>
               <div className="chat-header-text">
-                <h3>Poitola</h3>
+                <h3>Aura</h3>
                 <div className="chat-status">
                   <span className="status-dot" />
                   Online
@@ -476,7 +476,7 @@ export default function App() {
             <form onSubmit={handleSend} className="chat-input-wrapper">
               <input
                 type="text" className="chat-input"
-                placeholder="Message Poitola…"
+                placeholder="Message Aura…"
                 value={chatInput} onChange={(e) => setChatInput(e.target.value)}
                 disabled={isTyping}
               />
