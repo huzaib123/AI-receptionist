@@ -1,4 +1,4 @@
-# Aura — Intelligent AI Receptionist
+ Aura — Intelligent AI Receptionist
 
 Aura is a professional, conversational AI receptionist built for modern service businesses (clinics, salons, wellness studios, and co-working spaces). By blending natural language understanding with direct system integrations, Aura automates appointment booking, handles client inquiries with human-like warmth, and uses machine learning to predict and minimize no-show risks.
 
