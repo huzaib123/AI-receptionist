@@ -169,6 +169,8 @@
     [].forEach.call(document.querySelectorAll("#switch button"),function(b){
       var on = b.dataset.k===k;
       b.setAttribute("aria-pressed", on ? "true" : "false");
+      // On phones the tabs are one swipeable row; keep the active one visible.
+      if(on){ var sw=$("switch"); if(sw.scrollWidth>sw.clientWidth) sw.scrollLeft=b.offsetLeft-20; }
     });
     setHero(personal);
   }

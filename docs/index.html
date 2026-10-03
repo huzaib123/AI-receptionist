@@ -29,7 +29,7 @@
 .clock strong{color:var(--ink)}
 
 /* phone + chat */
-.switch{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.switch{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;position:relative}
 .switch button{font:500 13px/1 var(--body);padding:8px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
 .switch button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .phone{background:#fff;border:2px solid var(--ink);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;height:520px}
@@ -106,7 +106,7 @@ summary{cursor:pointer;font:600 19px/1.35 var(--display)}
 details p{color:var(--ink-soft);margin-top:10px;max-width:42em}
 
 @media (max-width:900px){
-  .hero .wrap,.owner .wrap{grid-template-columns:1fr;gap:36px}
+  .hero .wrap,.owner .wrap{grid-template-columns:minmax(0,1fr);gap:36px}
   .hero{padding-top:36px}
   .steps{grid-template-columns:1fr;gap:24px}
   .ask{grid-template-columns:1fr;gap:6px}
@@ -118,6 +118,15 @@ details p{color:var(--ink-soft);margin-top:10px;max-width:42em}
   .line{flex-wrap:wrap;gap:4px 12px}
   .line .dots{display:none}
   .line h3{white-space:normal}
+  /* industry tabs: one row to swipe, so the demo chat sits higher on the screen */
+  .switch{flex-wrap:nowrap;overflow-x:auto;margin:0 -20px 12px;padding:0 20px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .switch::-webkit-scrollbar{display:none}
+  .switch button{flex:none;white-space:nowrap}
+  .sign{margin:22px 0 16px}
+}
+/* comfortable tap targets on touch screens */
+@media (pointer:coarse){
+  .switch button,.chip{min-height:44px;padding-top:0;padding-bottom:0}
 }
 </style>
 </head>
@@ -165,7 +174,7 @@ details p{color:var(--ink-soft);margin-top:10px;max-width:42em}
           <div class="log" id="log" aria-live="polite"></div>
           <div class="chips" id="chips"></div>
           <form class="chat-form" id="form">
-            <input id="msg" autocomplete="off" placeholder="Try “Berapa harga?” or “Book tomorrow 3pm”" aria-label="Type a message to the demo receptionist">
+            <input id="msg" autocomplete="off" placeholder="Try “Berapa harga?”" aria-label="Type a message to the demo receptionist">
             <button type="submit">Send</button>
           </form>
         </div>
