@@ -87,7 +87,7 @@ pip install -r requirements.txt
 
 # 3. Configure
 cp .env.example .env
-# → Edit .env: set OPENAI_API_KEY (required)
+# → Edit .env: set LLM_API_KEY (free Gemini key) and, optionally, LLM_FALLBACK_API_KEY (free Groq key)
 # → Optionally set Google Calendar variables
 # → Optionally change ADMIN_API_KEY from the default
 
@@ -189,9 +189,15 @@ BUSINESS_TIMEZONE=Asia/Karachi
 
 | Variable                      | Default                       | Description                                    |
 |-------------------------------|-------------------------------|------------------------------------------------|
-| `OPENAI_API_KEY`              | *(required)*                  | OpenAI API key                                 |
-| `LLM_MODEL_NAME`              | `gpt-4o-mini`                 | Model name                                     |
+| `LLM_API_KEY`                 | *(required)*                  | Key for the primary provider (free Gemini key)  |
+| `LLM_BASE_URL`                | Gemini OpenAI-compatible URL  | Any OpenAI-compatible endpoint                  |
+| `LLM_MODEL_NAME`              | `gemini-2.5-flash`            | Primary model name                              |
+| `LLM_FALLBACK_API_KEY`        | `""`                          | Backup provider key (free Groq key); empty = no backup |
+| `LLM_FALLBACK_BASE_URL`       | `https://api.groq.com/openai/v1` | Backup OpenAI-compatible endpoint            |
+| `LLM_FALLBACK_MODEL_NAME`     | `llama-3.3-70b-versatile`     | Backup model, used when the primary errors or is rate-limited |
 | `LLM_TEMPERATURE`             | `0.3`                         | Sampling temperature                           |
+| `LLM_TIMEOUT_SECONDS`         | `30`                          | Per-request timeout                            |
+| `OPENAI_API_KEY`              | `""`                          | Legacy: used with `gpt-4o-mini` only when `LLM_API_KEY` is empty |
 | `LOG_LEVEL`                   | `INFO`                        | Python log level                               |
 | `DATABASE_URL`                | `sqlite:///./receptionist.db` | Database URL (SQLite or PostgreSQL)             |
 | `ADMIN_API_KEY`               | `dev_secret_key_123`          | API key for admin dashboard endpoints          |
@@ -278,7 +284,7 @@ This launches:
 
 1. Connect your GitHub repository
 2. Select **Docker** as the environment
-3. Configure environment variables: `OPENAI_API_KEY`, `ADMIN_API_KEY`, `DATABASE_URL`, `GOOGLE_SERVICE_ACCOUNT_FILE`, `GOOGLE_CALENDAR_ID`
+3. Configure environment variables: `LLM_API_KEY`, `LLM_FALLBACK_API_KEY`, `ADMIN_API_KEY`, `DATABASE_URL`, `GOOGLE_SERVICE_ACCOUNT_FILE`, `GOOGLE_CALENDAR_ID`
 4. Deploy — the Dockerfile compiles the React SPA, runs migrations, and starts the unified app
 
 ---

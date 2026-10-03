@@ -2,7 +2,8 @@
 Tool‑calling agent — LangChain agent wired to the receptionist tools.
 
 Uses ``create_tool_calling_agent`` + ``AgentExecutor`` which natively
-supports OpenAI function‑calling.  The agent is lazily built on first
+supports OpenAI‑style function‑calling (Gemini, Groq and OpenAI all
+provide it through their OpenAI‑compatible APIs).  The agent is lazily built on first
 request and cached, just like the old plain‑chat chain.
 """
 
@@ -13,13 +14,13 @@ from typing import Dict, Any, Optional
 
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 
 from app.core.settings import settings
 from app.core.business_profile import get_business_profile
 from app.agent.tools import ALL_TOOLS
+from app.llm.providers import get_fallback_llm, get_primary_llm, primary_model_name
 from app.schemas.chat import TokenUsage
 
 logger = logging.getLogger(__name__)
@@ -91,11 +92,8 @@ def _build_agent() -> AgentExecutor:
     if _agent_executor is not None:
         return _agent_executor
 
-    llm = ChatOpenAI(
-        model=settings.LLM_MODEL_NAME,
-        temperature=settings.LLM_TEMPERATURE,
-        api_key=settings.OPENAI_API_KEY,  # type: ignore[arg-type]
-    )
+    fallback_llm = get_fallback_llm()
+    llm = get_primary_llm(has_fallback=fallback_llm is not None)
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -107,6 +105,12 @@ def _build_agent() -> AgentExecutor:
     )
 
     agent = create_tool_calling_agent(llm, ALL_TOOLS, prompt)
+    if fallback_llm is not None:
+        # If the primary provider errors or is rate-limited, the same step
+        # is retried on the backup provider so customers still get a reply.
+        agent = agent.with_fallbacks(
+            [create_tool_calling_agent(fallback_llm, ALL_TOOLS, prompt)]
+        )
 
     _agent_executor = AgentExecutor(
         agent=agent,
@@ -115,11 +119,15 @@ def _build_agent() -> AgentExecutor:
         max_iterations=10,
         handle_parsing_errors=True,
         return_intermediate_steps=True,
+        # Replies are returned whole, so streaming buys nothing; invoking the
+        # agent instead lets the backup provider take over on any error.
+        stream_runnable=False,
     )
 
     logger.info(
-        "Agent initialised  model=%s  tools=%s",
-        settings.LLM_MODEL_NAME,
+        "Agent initialised  model=%s  fallback=%s  tools=%s",
+        primary_model_name(),
+        settings.LLM_FALLBACK_MODEL_NAME if fallback_llm is not None else None,
         [t.name for t in ALL_TOOLS],
     )
     return _agent_executor
