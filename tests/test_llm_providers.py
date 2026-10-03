@@ -59,8 +59,8 @@ def llm_env(monkeypatch):
     monkeypatch.setattr(agent_module, "_agent_executor", None)
     for name, value in {
         "LLM_API_KEY": "", "OPENAI_API_KEY": "", "LLM_FALLBACK_API_KEY": "",
-        "LLM_BASE_URL": GROQ, "LLM_MODEL_NAME": "llama-3.3-70b-versatile",
-        "LLM_FALLBACK_BASE_URL": GROQ, "LLM_FALLBACK_MODEL_NAME": "llama-3.1-8b-instant",
+        "LLM_BASE_URL": GROQ, "LLM_MODEL_NAME": "openai/gpt-oss-120b",
+        "LLM_FALLBACK_BASE_URL": GROQ, "LLM_FALLBACK_MODEL_NAME": "openai/gpt-oss-20b",
     }.items():
         monkeypatch.setattr(settings, name, value)
     monkeypatch.delenv("LLM_MODEL_NAME", raising=False)
@@ -71,11 +71,11 @@ def llm_env(monkeypatch):
 def test_default_is_groq_with_same_key_backup(llm_env):
     llm_env.setattr(settings, "LLM_API_KEY", "gsk-key")
     llm = providers.get_primary_llm()
-    assert llm.model_name == "llama-3.3-70b-versatile"
+    assert llm.model_name == "openai/gpt-oss-120b"
     assert "api.groq.com" in str(llm.openai_api_base)
     fb = providers.get_fallback_llm()
     assert fb is not None
-    assert fb.model_name == "llama-3.1-8b-instant"
+    assert fb.model_name == "openai/gpt-oss-20b"
     assert fb.openai_api_key.get_secret_value() == "gsk-key"
 
 
@@ -114,7 +114,7 @@ def test_agent_switches_to_backup_when_primary_is_rate_limited(llm_env):
 
         assert result["reply"] == "Hi! How can I help?"
         assert primary_hits, "primary provider should be tried first"
-        assert backup_hits[0]["model"] == "llama-3.1-8b-instant"
+        assert backup_hits[0]["model"] == "openai/gpt-oss-20b"
         assert backup_hits[0]["tools"], "backup must receive the receptionist tools"
     finally:
         primary.shutdown()

@@ -191,10 +191,10 @@ BUSINESS_TIMEZONE=Asia/Karachi
 |-------------------------------|-------------------------------|------------------------------------------------|
 | `LLM_API_KEY`                 | *(required)*                  | Key for the main provider (free Groq key)       |
 | `LLM_BASE_URL`                | `https://api.groq.com/openai/v1` | Any OpenAI-compatible endpoint               |
-| `LLM_MODEL_NAME`              | `llama-3.3-70b-versatile`     | Main model name                                 |
+| `LLM_MODEL_NAME`              | `openai/gpt-oss-120b`         | Main model name                                 |
 | `LLM_FALLBACK_API_KEY`        | `""`                          | Backup provider key; empty = reuse `LLM_API_KEY` on the same provider |
 | `LLM_FALLBACK_BASE_URL`       | `https://api.groq.com/openai/v1` | Backup OpenAI-compatible endpoint            |
-| `LLM_FALLBACK_MODEL_NAME`     | `llama-3.1-8b-instant`        | Backup model, used when the main one errors or is rate-limited; `none` = off |
+| `LLM_FALLBACK_MODEL_NAME`     | `openai/gpt-oss-20b`          | Backup model, used when the main one errors or is rate-limited; `none` = off |
 | `LLM_TEMPERATURE`             | `0.3`                         | Sampling temperature                           |
 | `LLM_TIMEOUT_SECONDS`         | `30`                          | Per-request timeout                            |
 | `OPENAI_API_KEY`              | `""`                          | Legacy: used with `gpt-4o-mini` only when `LLM_API_KEY` is empty |

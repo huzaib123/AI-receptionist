@@ -32,7 +32,7 @@ class Settings:
     # key, which has its own separate free quota.
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     LLM_BASE_URL: str = os.getenv("LLM_BASE_URL") or "https://api.groq.com/openai/v1"
-    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME") or "llama-3.3-70b-versatile"
+    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME") or "openai/gpt-oss-120b"
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.3"))
     LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 
@@ -40,7 +40,7 @@ class Settings:
     # provider. Set LLM_FALLBACK_MODEL_NAME=none to turn the backup off.
     LLM_FALLBACK_API_KEY: str = os.getenv("LLM_FALLBACK_API_KEY", "")
     LLM_FALLBACK_BASE_URL: str = os.getenv("LLM_FALLBACK_BASE_URL") or "https://api.groq.com/openai/v1"
-    LLM_FALLBACK_MODEL_NAME: str = os.getenv("LLM_FALLBACK_MODEL_NAME") or "llama-3.1-8b-instant"
+    LLM_FALLBACK_MODEL_NAME: str = os.getenv("LLM_FALLBACK_MODEL_NAME") or "openai/gpt-oss-20b"
 
     # Legacy: deployments configured only with OPENAI_API_KEY keep using OpenAI.
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
