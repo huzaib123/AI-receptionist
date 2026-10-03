@@ -21,6 +21,7 @@ from app.agent.tools import (
     db_log_booking,
     faq_lookup,
     predict_no_show,
+    handoff_to_human,
     Slot,
     BookingConfirmation,
     CustomerRecord,
@@ -53,7 +54,7 @@ class TestToolSchemas:
             assert "properties" in json_schema
 
     def test_tool_count(self):
-        assert len(ALL_TOOLS) == 6
+        assert len(ALL_TOOLS) == 7
 
     def test_tool_names(self):
         names = {t.name for t in ALL_TOOLS}
@@ -64,6 +65,7 @@ class TestToolSchemas:
             "db_log_booking",
             "faq_lookup",
             "predict_no_show",
+            "handoff_to_human",
         }
         assert names == expected
 
@@ -157,7 +159,7 @@ class TestFaqLookup:
 
     def test_substring_match(self):
         result = faq_lookup.invoke({"question": "What are your opening hours?"})
-        assert "9 AM" in result
+        assert "9:00 AM" in result
 
     def test_unknown_question(self):
         result = faq_lookup.invoke({"question": "quantum physics"})
@@ -166,6 +168,15 @@ class TestFaqLookup:
     def test_case_insensitive(self):
         result = faq_lookup.invoke({"question": "PARKING"})
         assert "parking" in result.lower()
+
+
+class TestHandoffToHuman:
+    def test_returns_whatsapp_link(self):
+        result = handoff_to_human.invoke(
+            {"reason": "I want to ask about braces", "customer_name": "Aina"}
+        )
+        assert result["whatsapp_link"].startswith("https://wa.me/")
+        assert "Aina" in result["whatsapp_link"]
 
 
 class TestPredictNoShow:

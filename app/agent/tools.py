@@ -22,6 +22,7 @@ from app.integrations.google_calendar import gcal_client
 from app.db.session import get_db_session
 from app.db import crud
 from app.ml.no_show_model import predict_no_show_prob
+from app.core.business_profile import get_business_profile
 
 logger = logging.getLogger(__name__)
 
@@ -67,27 +68,6 @@ class CustomerRecord(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════
 _customers: List[CustomerRecord] = []
 _bookings: List[BookingConfirmation] = []
-
-# ═══════════════════════════════════════════════════════════════════════════
-# FAQ knowledge base (stub)
-# ═══════════════════════════════════════════════════════════════════════════
-_FAQ_DB: dict[str, str] = {
-    "hours": "We are open Monday–Saturday, 9 AM to 7 PM. Closed on Sundays.",
-    "opening hours": "We are open Monday–Saturday, 9 AM to 7 PM. Closed on Sundays.",
-    "location": "We are located at 123 Main Street, Suite 4, Downtown.",
-    "address": "We are located at 123 Main Street, Suite 4, Downtown.",
-    "parking": "Free parking is available behind the building.",
-    "cancellation": "You can cancel or reschedule free of charge up to 2 hours before your appointment.",
-    "cancel": "You can cancel or reschedule free of charge up to 2 hours before your appointment.",
-    "reschedule": "You can cancel or reschedule free of charge up to 2 hours before your appointment.",
-    "payment": "We accept cash, credit/debit cards, and Apple Pay.",
-    "price": "Haircut: $30 | Color: $80 | Massage (60 min): $70 | Consultation: Free.",
-    "prices": "Haircut: $30 | Color: $80 | Massage (60 min): $70 | Consultation: Free.",
-    "services": "We offer haircuts, coloring, massages, facials, and free consultations.",
-    "covid": "All staff are vaccinated. Masks are optional. We sanitise between appointments.",
-    "wifi": "Free Wi‑Fi is available. Network: GuestNet, Password: welcome123.",
-}
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Stub helpers (used when Google Calendar is not configured)
@@ -336,13 +316,14 @@ def faq_lookup(question: str) -> str:
     logger.info("🔧 faq_lookup  question=%s", question)
 
     q_lower = question.lower().strip()
+    kb = get_business_profile().knowledge_base()
 
     # Direct match
-    if q_lower in _FAQ_DB:
-        return _FAQ_DB[q_lower]
+    if q_lower in kb:
+        return kb[q_lower]
 
     # Substring match
-    for key, answer in _FAQ_DB.items():
+    for key, answer in kb.items():
         if key in q_lower or q_lower in key:
             return answer
 
@@ -350,6 +331,34 @@ def faq_lookup(question: str) -> str:
         "I don't have that information in my FAQ database. "
         "Let me connect you with a staff member who can help."
     )
+
+
+@tool
+def handoff_to_human(reason: str, customer_name: str = "") -> dict:
+    """Hand the conversation over to a human staff member via WhatsApp.
+
+    Use this when the customer asks to speak to a person, when the question
+    is outside the FAQ, or for complaints, medical/legal advice or anything
+    you are not sure about.
+
+    Args:
+        reason: Short summary of what the customer needs.
+        customer_name: Customer's name, if known.
+    """
+    logger.info("🔧 handoff_to_human  reason=%s  customer=%s", reason, customer_name)
+
+    profile = get_business_profile()
+    who = f"I'm {customer_name}. " if customer_name else ""
+    link = profile.whatsapp_link(f"Hi {profile.name}, {who}{reason}")
+    return {
+        "whatsapp_link": link,
+        "phone": profile.phone or None,
+        "message": (
+            "Share the WhatsApp link so the customer can continue with our team."
+            if link
+            else "No WhatsApp number configured; give the customer our phone number instead."
+        ),
+    }
 
 
 @tool
@@ -432,5 +441,6 @@ ALL_TOOLS = [
     db_log_booking,
     faq_lookup,
     predict_no_show,
+    handoff_to_human,
 ]
 

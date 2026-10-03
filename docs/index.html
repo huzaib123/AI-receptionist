@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura — Website + AI Receptionist</title>
+<meta name="description" content="A modern website plus a 24/7 AI receptionist that answers customers in English, BM and 中文, shares prices and books appointments. Built for Subang Jaya &amp; Sunway businesses.">
+<style>
+:root{
+  --c:#0f766e;--c-ink:#ffffff;--bg:#ffffff;--bg2:#f5f7f8;--ink:#0f172a;--muted:#5b6474;--line:#e3e7ec;--card:#ffffff;
+  --radius:16px;--shadow:0 10px 30px rgba(15,23,42,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0b1114;--bg2:#111a1e;--ink:#e8eef0;--muted:#9aa7ad;--line:#22303a;--card:#121c21;--shadow:0 10px 30px rgba(0,0,0,.35)}
+}
+:root[data-theme="dark"]{--bg:#0b1114;--bg2:#111a1e;--ink:#e8eef0;--muted:#9aa7ad;--line:#22303a;--card:#121c21;--shadow:0 10px 30px rgba(0,0,0,.35)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--c)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:800;font-size:20px;color:var(--ink);text-decoration:none;display:flex;gap:8px;align-items:center}
+.logo i{width:12px;height:12px;border-radius:50%;background:var(--c);display:inline-block}
+nav a{margin-left:18px;color:var(--muted);text-decoration:none;font-size:15px}
+nav a.btn{color:var(--c-ink)}
+.btn{display:inline-block;background:var(--c);color:var(--c-ink);padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600;border:0;cursor:pointer;font-size:15px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.hero{padding-top:64px;padding-bottom:40px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.pill{display:inline-block;font-size:13px;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);font-weight:600;margin-bottom:16px}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.08;margin:0 0 16px;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--c)}
+.lead{font-size:18px;color:var(--muted);margin:0 0 24px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.trust{margin-top:20px;font-size:14px;color:var(--muted)}
+/* phone mock with live chat */
+.phone{background:var(--card);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;height:560px;max-width:400px;width:100%;justify-self:center}
+.phone-head{background:var(--c);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.av{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-weight:700}
+.phone-head b{display:block;font-size:15px}.phone-head small{opacity:.85;font-size:12px}
+.log{flex:1;overflow-y:auto;padding:14px;background:var(--bg2);display:flex;flex-direction:column;gap:8px}
+.m{max-width:85%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.bot{background:var(--card);border:1px solid var(--line);align-self:flex-start}
+.me{background:var(--c);color:#fff;align-self:flex-end}
+.m a{color:inherit}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;border-top:1px solid var(--line);background:var(--card)}
+.chip{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.chat-form{display:flex;border-top:1px solid var(--line);background:var(--card)}
+.chat-form input{flex:1;border:0;padding:14px;font-size:15px;background:transparent;color:var(--ink);outline:none;min-width:0}
+.chat-form button{border:0;background:none;color:var(--c);font-weight:700;padding:0 16px;cursor:pointer}
+section{padding:56px 0}
+section.alt{background:var(--bg2)}
+h2{font-size:clamp(26px,3.5vw,36px);margin:0 0 10px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 32px;max-width:640px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.card h3{margin:0 0 8px;font-size:18px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.ico{font-size:24px;margin-bottom:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.stat b{display:block;font-size:30px;color:var(--c)}
+.stat span{color:var(--muted);font-size:14px}
+.price{display:flex;flex-direction:column}
+.price.pop{border:2px solid var(--c);position:relative}
+.price.pop:before{content:"Most popular";position:absolute;top:-12px;left:22px;background:var(--c);color:#fff;font-size:12px;padding:3px 10px;border-radius:999px;font-weight:600}
+.amt{font-size:34px;font-weight:800;margin:6px 0 0}
+.amt small{font-size:15px;color:var(--muted);font-weight:500}
+.setup{color:var(--muted);font-size:14px;margin-bottom:16px}
+.price ul{padding:0;margin:0 0 20px;list-style:none;flex:1}
+.price li{padding:6px 0 6px 24px;position:relative;font-size:15px}
+.price li:before{content:"✓";position:absolute;left:0;color:var(--c);font-weight:700}
+.offer{margin-top:20px;padding:16px 18px;border-radius:var(--radius);background:color-mix(in srgb,var(--c) 10%,transparent);border:1px dashed var(--c);font-size:15px}
+.steps{counter-reset:s;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.steps .card:before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--c);color:#fff;font-weight:700;margin-bottom:10px}
+details{border-bottom:1px solid var(--line);padding:14px 0}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--muted);margin:8px 0 0}
+footer{padding:32px 0;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+.switch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;justify-content:center}
+.switch button{font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.switch button.on{background:var(--c);color:#fff;border-color:var(--c)}
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;padding-top:36px}
+  header{background:var(--bg)}
+  .grid,.steps{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr 1fr}
+  nav a:not(.btn){display:none}
+  .phone{height:520px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="logo" href="#"><i></i>Aura</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn" id="nav-cta" href="#pricing">Free 14-day trial</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <span class="pill" id="pill">Made for Subang Jaya &amp; Sunway businesses</span>
+      <h1 id="headline">A new website <em>plus</em> an AI receptionist that never misses a customer.</h1>
+      <p class="lead" id="lead">Answers enquiries 24/7 in English, Bahasa Malaysia and 中文. It shares your prices, books appointments and passes hot leads to your WhatsApp, even at 2 AM.</p>
+      <div class="cta">
+        <a class="btn" href="#demo-phone" onclick="document.getElementById('msg').focus()">Try the live demo →</a>
+        <a class="btn ghost" href="#pricing">See pricing</a>
+      </div>
+      <p class="trust">No lock-in contract · Setup in 5 working days · Local support in Subang Jaya</p>
+    </div>
+
+    <div id="demo-phone" style="width:100%">
+      <div class="switch" id="switch"></div>
+      <div class="phone">
+        <div class="phone-head">
+          <div class="av" id="av">A</div>
+          <div><b id="biz-name">Demo Clinic</b><small>AI receptionist · replies instantly</small></div>
+        </div>
+        <div class="log" id="log" aria-live="polite"></div>
+        <div class="chips" id="chips"></div>
+        <form class="chat-form" id="form">
+          <input id="msg" autocomplete="off" placeholder="Try: “Berapa harga?” or “Book tomorrow 3pm”" aria-label="Message">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <section class="alt" id="features">
+    <div class="wrap">
+      <h2>Everything a front desk does, without the overtime</h2>
+      <p class="sub">Your customers message at night, on weekends and during your busiest hours. Aura replies in seconds, so enquiries don't go to the competitor down the road.</p>
+      <div class="grid">
+        <div class="card"><div class="ico">🌐</div><h3>A website that converts</h3><p>A fast, mobile-first site with your services, prices, photos, Google Maps and reviews. You get your own domain and it's built to rank on Google.</p></div>
+        <div class="card"><div class="ico">💬</div><h3>24/7 AI receptionist</h3><p>Trained on <em>your</em> services, prices, hours and policies. It answers the same 20 questions your staff answer every day.</p></div>
+        <div class="card"><div class="ico">📅</div><h3>Books appointments</h3><p>Checks real availability in Google Calendar and confirms bookings automatically, with no back-and-forth.</p></div>
+        <div class="card"><div class="ico">🗣️</div><h3>EN · BM · 中文</h3><p>It replies in whatever language your customer writes in, including Manglish.</p></div>
+        <div class="card"><div class="ico">📲</div><h3>WhatsApp handoff</h3><p>When a customer wants a human, Aura hands over to your WhatsApp with the full context. No lead is lost.</p></div>
+        <div class="card"><div class="ico">📉</div><h3>Fewer no-shows</h3><p>Our model flags bookings that are likely to no-show, so your team can send a reminder in time.</p></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>24/7</b><span>Always answering</span></div>
+        <div class="stat"><b>&lt;5s</b><span>Average reply time</span></div>
+        <div class="stat"><b>3</b><span>Languages out of the box</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Live in 5 working days</h2>
+      <p class="sub">We do the work. You just send us your menu or price list.</p>
+      <div class="steps">
+        <div class="card"><h3>15-minute call</h3><p>Tell us your services, prices, hours and the questions customers always ask.</p></div>
+        <div class="card"><h3>We build &amp; train</h3><p>We design your website and train the AI on your business. You review it and ask for changes.</p></div>
+        <div class="card"><h3>Go live</h3><p>Your site goes live with the chatbot installed. Already have a website? The chatbot is one line of code.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="pricing">
+    <div class="wrap">
+      <h2>Simple, honest pricing</h2>
+      <p class="sub">Less than the cost of one part-time receptionist shift a week. Cancel any time.</p>
+      <div class="grid">
+        <div class="card price">
+          <h3>Chatbot Only</h3>
+          <div class="amt">RM 79<small>/month</small></div>
+          <div class="setup">Free setup · for your existing website</div>
+          <ul>
+            <li>AI receptionist trained on your business</li>
+            <li>EN / BM / 中文 replies</li>
+            <li>WhatsApp handoff</li>
+            <li>Up to 1,000 chats / month</li>
+          </ul>
+          <a class="btn ghost" data-plan="Chatbot Only" href="#">Start free trial</a>
+        </div>
+        <div class="card price pop">
+          <h3>Website + Chatbot</h3>
+          <div class="amt">RM 129<small>/month</small></div>
+          <div class="setup">+ RM 699 one-time website setup</div>
+          <ul>
+            <li>Everything in Chatbot Only</li>
+            <li>5-page mobile website, your own domain</li>
+            <li>Hosting, SSL &amp; monthly updates included</li>
+            <li>Google Maps, reviews &amp; SEO basics</li>
+            <li>Appointment booking + calendar sync</li>
+          </ul>
+          <a class="btn" data-plan="Website + Chatbot" href="#">Start free trial</a>
+        </div>
+        <div class="card price">
+          <h3>Growth</h3>
+          <div class="amt">RM 249<small>/month</small></div>
+          <div class="setup">+ RM 1,290 one-time setup</div>
+          <ul>
+            <li>Everything in Website + Chatbot</li>
+            <li>Up to 10 pages + blog</li>
+            <li>No-show prediction &amp; reminders</li>
+            <li>Monthly enquiry report</li>
+            <li>Unlimited chats, priority support</li>
+          </ul>
+          <a class="btn ghost" data-plan="Growth" href="#">Talk to us</a>
+        </div>
+      </div>
+      <div class="offer"><b>Subang Jaya &amp; Sunway launch offer:</b> the first 10 local businesses get <b>50% off setup</b> (Website + Chatbot from <b>RM 349</b>) and the <b>first month free</b>. No contract, cancel any time.</div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <details><summary>Will it give wrong answers to my customers?</summary><p>Aura only answers from the information you give us: your services, prices, hours and policies. If it doesn't know, it hands over to your WhatsApp instead of guessing.</p></details>
+      <details><summary>I already have a website. Do I need a new one?</summary><p>No. The Chatbot Only plan adds Aura to your existing site with one line of code. It works on WordPress, Wix, Shopify and custom sites.</p></details>
+      <details><summary>What about patient / customer data (PDPA)?</summary><p>Data is stored securely and used only for your business. We never sell or share it, and you can export or delete it at any time.</p></details>
+      <details><summary>Can I change prices or services later?</summary><p>Yes. Send us a WhatsApp message and we'll update it the same day at no extra cost.</p></details>
+      <details><summary>Is there a contract?</summary><p>No. It's month-to-month and you can cancel any time. If you leave, the website and domain are yours to keep.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">© <span id="yr"></span> Aura · AI receptionists for local businesses · Subang Jaya, Selangor</div>
+</footer>
+
+<script>
+(function(){
+  // ── Industry presets for the live demo ─────────────────────────────────
+  var P = {
+    clinic:{label:"Clinic",name:"Demo Family Clinic",color:"#0f766e",
+      hours:"Mon–Sat 8:00am–10:00pm, Sun 8:00am–4:00pm",
+      services:[["GP consultation","RM 45"],["Health screening","from RM 150"],["Vaccination (flu)","RM 85"],["Medical check-up for work","RM 60"]],
+      extra:{panel:"Yes, we're a panel clinic for most major insurers and company panels. Please bring your panel card or GL.",walkin:"Walk-ins are welcome! Average waiting time right now is about 15 minutes, or I can book you a slot so you skip the queue."}},
+    dental:{label:"Dental",name:"Demo Dental Clinic",color:"#0e7490",
+      hours:"Mon–Sat 9:00am–7:00pm, closed Sunday",
+      services:[["Scaling & polishing","RM 120"],["Tooth filling","from RM 100"],["Teeth whitening","RM 900"],["Braces / Invisalign consultation","Free"]],
+      extra:{pain:"Sorry to hear that! For toothache we keep emergency slots every day. Shall I book the earliest one for you?",panel:"We accept most company panels and insurance. Please bring your panel card."}},
+    beauty:{label:"Salon / Beauty",name:"Demo Beauty Studio",color:"#be185d",
+      hours:"Tue–Sun 10:00am–8:00pm, closed Monday",
+      services:[["Women's cut & blow","RM 68"],["Hair colour","from RM 180"],["Gel manicure","RM 75"],["Eyelash extension","RM 128"],["Facial (60 min)","RM 150"]],
+      extra:{stylist:"Of course! Tell me your preferred stylist and I'll check their slots.",promo:"This month: first-time customers get 20% off any facial 💆‍♀️"}},
+    fitness:{label:"Gym / Studio",name:"Demo Fitness Studio",color:"#c2410c",
+      hours:"Daily 6:30am–10:00pm",
+      services:[["Trial class","Free"],["Monthly membership","RM 199"],["10-class pass","RM 280"],["Personal training (1 hr)","RM 120"]],
+      extra:{trial:"Your first class is free! Shall I book you a trial class this week?",beginner:"Absolutely, most of our members started as beginners. Our coaches adjust every class to your level."}},
+    tuition:{label:"Tuition / Preschool",name:"Demo Learning Centre",color:"#4338ca",
+      hours:"Mon–Fri 2:00pm–9:00pm, Sat–Sun 9:00am–5:00pm",
+      services:[["Primary (per subject)","RM 120/month"],["Secondary / SPM (per subject)","RM 160/month"],["IGCSE (per subject)","RM 220/month"],["Free trial class","Free"]],
+      extra:{trial:"Every new student gets a free trial class. Which subject and level is it for?",teacher:"All our teachers are degree holders with 5+ years' experience, and class sizes are kept small (max 8)."}},
+    pets:{label:"Vet / Pets",name:"Demo Animal Clinic",color:"#15803d",
+      hours:"Mon–Sat 10:00am–8:00pm, Sun 10:00am–2:00pm",
+      services:[["Consultation","RM 50"],["Vaccination (dog/cat)","from RM 80"],["Grooming (small dog)","RM 70"],["Spay / neuter","from RM 250"]],
+      extra:{emergency:"If this is an emergency, please call us right away. I'll pass your details to the vet on duty too.",boarding:"Yes, we have boarding. It's RM 40/night for cats and from RM 50/night for dogs."}},
+    physio:{label:"Physio / Wellness",name:"Demo Physio Centre",color:"#0369a1",
+      hours:"Mon–Sat 9:00am–8:00pm, closed Sunday",
+      services:[["Initial assessment & treatment","RM 150"],["Follow-up session","RM 120"],["Sports massage (60 min)","RM 140"],["Clinical pilates (private)","RM 160"]],
+      extra:{pain:"Sorry you're in pain. Our physio will assess it in your first session. Shall I book the earliest assessment slot?",panel:"We accept selected insurance and company panels. Please bring your card and we'll check for you."}},
+    optical:{label:"Optical",name:"Demo Optometry",color:"#7c3aed",
+      hours:"Daily 10:00am–9:00pm",
+      services:[["Comprehensive eye test","Free with purchase / RM 30"],["Single-vision lenses","from RM 180"],["Progressive / multifocal lenses","from RM 650"],["Contact lens fitting","RM 50"]],
+      extra:{kid:"Yes, we do children's eye exams and myopia control. Shall I book a slot?",ready:"Most glasses are ready in 3–5 working days."}},
+    general:{label:"Local Services",name:"Demo Services Co.",color:"#b45309",
+      hours:"Mon–Sat 9:00am–6:00pm, closed Sunday",
+      services:[["Free consultation & quote","Free"],["Site visit / meeting","Free within Subang Jaya"],["Standard package","from RM 500"],["Premium package","from RM 1,500"]],
+      extra:{quote:"Happy to prepare a quote! Can I have your name, WhatsApp number and a short description of what you need?",urgent:"For urgent requests I'll pass your details to our team on WhatsApp right away."}},
+    services:{label:"Professional",name:"Demo Services Firm",color:"#1d4ed8",
+      hours:"Mon–Fri 9:00am–6:00pm, closed Saturday & Sunday",
+      services:[["Free first consultation (30 min)","Free"],["Company incorporation","from RM 1,500"],["Monthly bookkeeping","from RM 300"],["Tax filing (individual)","from RM 250"]],
+      extra:{quote:"Happy to prepare a quote! Can I have your name, WhatsApp number and a short description of what you need?"}}
+  };
+  var catMap = {gp:"clinic",clinic:"clinic",medical:"clinic",physio:"physio",chiro:"physio",pain:"physio",optometrist:"optical",
+    dental:"dental",dentist:"dental",
+    aesthetic:"beauty",skin:"beauty",salon:"beauty",barber:"beauty",beauty:"beauty",spa:"beauty",nail:"beauty",lash:"beauty",massage:"beauty",reflexology:"beauty",
+    gym:"fitness",fitness:"fitness",yoga:"fitness",pilates:"fitness",dance:"fitness",
+    tuition:"tuition",preschool:"tuition",kindergarten:"tuition",music:"tuition",school:"tuition",driving:"tuition",
+    vet:"pets",veterinary:"pets",pet:"pets",grooming:"pets"};
+
+  var qs = new URLSearchParams(location.search);
+  var key = (qs.get("biz")||"clinic").toLowerCase();
+  key = P[key] ? key : (catMap[key] || "services");
+  var customName = (qs.get("name")||"").slice(0,60);
+  var cur;
+
+  var $ = function(id){return document.getElementById(id)};
+  var log = $("log"), input = $("msg");
+  var state = {};
+
+  function esc(t){return t.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function add(t,who){var d=document.createElement("div");d.className="m "+(who==="me"?"me":"bot");d.innerHTML=esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+  function botSay(t){var d=add("…","bot");setTimeout(function(){d.innerHTML=esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");log.scrollTop=log.scrollHeight},600+Math.min(900,t.length*6))}
+
+  function lang(t){
+    if(/[一-鿿]/.test(t)) return "zh";
+    if(/\b(berapa|harga|boleh|nak|saya|esok|buka|tutup|pukul|janji|temu|terima|kasih|ada|tak|bila|mana|alamat)\b/i.test(t)) return "ms";
+    return "en";
+  }
+  function slots(){
+    var d=new Date();d.setDate(d.getDate()+1);
+    if(d.getDay()===0 && /closed sunday/i.test(cur.hours)) d.setDate(d.getDate()+1); // skip closed Sundays
+    var day=d.toLocaleDateString("en-MY",{weekday:"long",day:"numeric",month:"short"});
+    return {day:day,times:["10:30am","2:00pm","4:30pm"]};
+  }
+  function menu(){return cur.services.map(function(s){return "• "+s[0]+": "+s[1]}).join("\n")}
+
+  function reply(t){
+    var l=lang(t), x=t.toLowerCase();
+    // booking flow continuation
+    if(state.step==="pick"){
+      var m=x.match(/(10[:.]?30|2[:.]?00|4[:.]?30|\b2\s?pm|\b4|\b10)/);
+      if(m||/first|pertama|第一|ok|yes|ya|boleh|好/.test(x)){
+        var pick = m ? (/10/.test(m[0])?"10:30am":/4/.test(m[0])?"4:30pm":"2:00pm") : state.s.times[0];
+        state.time=pick;state.step="name";
+        return l==="ms"?"Baik! "+state.s.day+", "+pick+" ✅ Boleh saya dapatkan nama dan nombor telefon anda untuk pengesahan?":
+               l==="zh"?"好的！已为您保留 "+state.s.day+" "+pick+" ✅ 请提供您的姓名和电话号码以确认预约。":
+               "Great choice! I've held "+state.s.day+" at "+pick+" for you ✅ May I have your name and phone number to confirm?";
+      }
+    }
+    if(state.step==="name" && (/\d{6,}/.test(x.replace(/[\s-]/g,""))||x.split(" ").length<=4)){
+      state.step=null;
+      var ref="BK-"+Math.random().toString(36).slice(2,8).toUpperCase();
+      return l==="ms"?"Tempahan disahkan! 🎉 Rujukan: **"+ref+"**. Kami akan hantar peringatan WhatsApp sehari sebelum. Jumpa nanti!":
+             l==="zh"?"预约成功！🎉 编号：**"+ref+"**。我们会在前一天通过 WhatsApp 提醒您。到时见！":
+             "You're booked! 🎉 Reference **"+ref+"**. We'll send a WhatsApp reminder the day before. See you then!\n\n(Behind the scenes: added to the calendar, saved to the customer list, and the no-show risk was checked.)";
+    }
+    if(/book|appointment|slot|available|tomorrow|janji|temu|tempah|esok|预约|预定|明天|trial|reserve/.test(x)){
+      state.s=slots();state.step="pick";
+      return l==="ms"?"Boleh! Slot kosong terdekat ("+state.s.day+"): "+state.s.times.join(", ")+". Yang mana sesuai?":
+             l==="zh"?"可以！最近可预约的日子（"+state.s.day+"）还有这些时段："+state.s.times.join("、")+"。您想选哪个？":
+             "Sure! Here's the next available day ("+state.s.day+"): "+state.s.times.join(", ")+". Which works for you?";
+    }
+    if(/price|cost|how much|rate|fee|harga|berapa|caj|多少钱|价格|收费|package|menu|service|perkhidmatan|服务/.test(x)){
+      return (l==="ms"?"Ini senarai harga kami:\n":l==="zh"?"这是我们的价格：\n":"Here are our prices:\n")+menu()+
+        (l==="ms"?"\n\nNak saya tempahkan slot?":l==="zh"?"\n\n需要我帮您预约吗？":"\n\nWould you like me to book a slot?");
+    }
+    if(/hour|open|close|buka|tutup|营业|几点|时间|sunday|ahad|weekend/.test(x)){
+      return l==="ms"?"Waktu operasi kami: "+cur.hours+".":l==="zh"?"我们的营业时间："+cur.hours+"。":"We're open "+cur.hours+".";
+    }
+    if(/where|address|location|park|alamat|mana|parking|地址|在哪|停车/.test(x)){
+      return l==="ms"?"Kami di Subang Jaya, 5 minit dari LRT SS15. Parking tepi jalan & di SS15 Courtyard.":
+             l==="zh"?"我们位于梳邦再也，离 SS15 轻快铁站步行 5 分钟。附近有路边停车位和 SS15 Courtyard 停车场。":
+             "We're in Subang Jaya, about 5 minutes' walk from SS15 LRT. There's street parking and covered parking at SS15 Courtyard nearby.";
+    }
+    if(/human|staff|person|talk|whatsapp|call|manusia|staf|人工|客服|complain|aduan/.test(x)){
+      return l==="ms"?"Tiada masalah. Saya sambungkan anda ke staf kami di WhatsApp dengan ringkasan perbualan ini. 📲":
+             l==="zh"?"没问题，我会把对话摘要一起转给我们的同事，请在 WhatsApp 继续联系。📲":
+             "No problem! I'll connect you to our team on WhatsApp and pass on a summary of this chat, so you won't have to repeat yourself. 📲";
+    }
+    for(var k in cur.extra){ if(x.indexOf(k)>-1) return cur.extra[k]; }
+    if(/pay|card|cash|duitnow|tng|ewallet|bayar|付款/.test(x)) return "We accept cash, cards, DuitNow QR, Touch 'n Go eWallet and GrabPay.";
+    if(/hi|hello|hai|helo|salam|你好|hey/.test(x)) return l==="ms"?"Hai! Apa yang boleh saya bantu hari ini?":l==="zh"?"您好！今天有什么可以帮您？":"Hi there! How can I help you today?";
+    if(/thank|terima kasih|谢谢|tq/.test(x)) return l==="ms"?"Sama-sama! 😊":l==="zh"?"不客气！😊":"You're welcome! 😊";
+    return l==="ms"?"Soalan yang bagus! Saya boleh bantu dengan harga, waktu operasi, lokasi atau tempahan. Untuk perkara lain, saya akan sambungkan anda ke staf kami di WhatsApp.":
+           l==="zh"?"好问题！我可以帮您查询价格、营业时间、地址或预约。其他问题我会转给我们的同事。":
+           "Good question! I can help with prices, opening hours, location and bookings. For anything else, I'll pass you to our team on WhatsApp so a person can answer.";
+  }
+
+  function chipsFor(){
+    var c=["How much?","Book tomorrow","Buka hari Ahad?","几点关门？","Talk to a human"];
+    $("chips").innerHTML="";
+    c.forEach(function(t){var b=document.createElement("button");b.className="chip";b.type="button";b.textContent=t;b.onclick=function(){send(t)};$("chips").appendChild(b)});
+  }
+  function load(k){
+    key=k;cur=P[k];state={};
+    var name = customName || cur.name;
+    document.documentElement.style.setProperty("--c",cur.color);
+    $("biz-name").textContent=name;$("av").textContent=name.charAt(0).toUpperCase();
+    log.innerHTML="";
+    add("Hi! 👋 Welcome to "+name+". I can share prices, answer questions and book appointments in English, BM or 中文. How can I help?","bot");
+    chipsFor();
+    [].forEach.call(document.querySelectorAll("#switch button"),function(b){b.classList.toggle("on",b.dataset.k===k)});
+  }
+  function send(t){add(t,"me");botSay(reply(t))}
+
+  Object.keys(P).forEach(function(k){var b=document.createElement("button");b.type="button";b.textContent=P[k].label;b.dataset.k=k;b.onclick=function(){customName="";load(k)};$("switch").appendChild(b)});
+  $("form").onsubmit=function(e){e.preventDefault();var t=input.value.trim();if(!t)return;input.value="";send(t)};
+
+  if(customName){
+    $("pill").textContent="Personalised demo for "+customName;
+    $("headline").innerHTML="Here's what <em>"+esc(customName)+"</em> could look like with an AI receptionist.";
+  }
+  // ── Where "Start free trial" goes. Fill these in before sharing the link. ──
+  var SALES_WHATSAPP = "";   // e.g. "60123456789"
+  var SALES_EMAIL = "";      // e.g. "hello@yourdomain.com"
+  var CONTACT = qs.get("contact") || SALES_WHATSAPP;
+  [].forEach.call(document.querySelectorAll("[data-plan]"),function(a){
+    a.onclick=function(e){e.preventDefault();
+      var msg="Hi, I'm interested in the Aura "+a.dataset.plan+" plan"+(customName?" for "+customName:"")+".";
+      if(CONTACT) location.href="https://wa.me/"+CONTACT+"?text="+encodeURIComponent(msg);
+      else location.href="mailto:"+SALES_EMAIL+"?subject="+encodeURIComponent("Aura – "+a.dataset.plan)+"&body="+encodeURIComponent(msg);
+    };
+  });
+  $("yr").textContent=new Date().getFullYear();
+  load(key);
+})();
+</script>
+</body>
+</html>

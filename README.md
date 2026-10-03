@@ -6,6 +6,23 @@ Built using **FastAPI**, **LangChain**, **React**, **Google Calendar API**, and 
 
 ---
 
+## Selling Aura to local businesses
+
+Aura is packaged as a **Website + AI Receptionist** combo for SMBs (clinics, dental, salons, gyms, tuition centres, vets, professional firms).
+
+| What | Where |
+|---|---|
+| Public sales page + live, personalised demo (no backend needed) | `docs/index.html`, deployed to GitHub Pages by `.github/workflows/pages.yml` |
+| Personalised demo link per prospect | `…/?biz=dental&name=Smile%20Life%20Dental` (`biz` = clinic, dental, beauty, fitness, tuition, pets, services) |
+| Per-client branding, services, RM prices, hours, FAQ, WhatsApp | `config/business_profile.json` (copy from `config/business_profile.example.json`) |
+| Add the chatbot to a client's **existing** website | `<script src="https://YOUR-AURA-HOST/widget.js" defer></script>` |
+| Lead list + outreach emails | `sales/` (gitignored — keep prospect data out of the public repo) |
+
+Each client deployment is one container with its own `.env` and `business_profile.json`.
+The agent replies in the customer's language (EN / BM / 中文), quotes prices in RM, and hands off to WhatsApp via the `handoff_to_human` tool when it can't help.
+
+---
+
 ## Architecture
 
 ```

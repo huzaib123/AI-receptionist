@@ -25,6 +25,7 @@ from app.db.session import get_db, engine, Base
 from app.db import crud
 from app.ml.no_show_model import predict_no_show_prob
 from app.core.security import verify_admin_key, check_rate_limit
+from app.core.business_profile import get_business_profile
 
 # ── Logging ────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -72,6 +73,35 @@ Base.metadata.create_all(bind=engine)
 async def health_check():
     """Liveness probe."""
     return {"status": "ok"}
+
+
+@app.get("/api/profile")
+def public_profile():
+    """Public business details used by the website and the chat widget."""
+    p = get_business_profile()
+    return {
+        "name": p.name,
+        "industry": p.industry,
+        "tagline": p.tagline,
+        "address": p.address,
+        "phone": p.phone,
+        "email": p.email,
+        "hours": p.hours,
+        "brand_color": p.brand_color,
+        "languages": p.languages,
+        "currency": p.currency,
+        "services": [s.model_dump() for s in p.services],
+        "whatsapp_link": p.whatsapp_link(),
+    }
+
+
+WIDGET_JS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "widget", "widget.js")
+
+
+@app.get("/widget.js", include_in_schema=False)
+def widget_js():
+    """Embeddable chat widget: <script src="https://HOST/widget.js" defer></script>"""
+    return FileResponse(WIDGET_JS, media_type="application/javascript")
 
 
 @app.get("/admin/bookings/today", dependencies=[Depends(verify_admin_key)])
@@ -195,7 +225,8 @@ if os.path.exists(STATIC_DIR):
         if (fallback_path.startswith("chat") or
                 fallback_path.startswith("admin") or
                 fallback_path.startswith("ml") or
-                fallback_path.startswith("health")):
+                fallback_path.startswith("health") or
+                fallback_path.startswith("api")):
             raise HTTPException(status_code=404, detail="Not Found")
         
         index_file = os.path.join(STATIC_DIR, "index.html")
