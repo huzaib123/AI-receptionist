@@ -33,7 +33,7 @@ class Settings:
     LLM_BASE_URL: str = (
         os.getenv("LLM_BASE_URL") or "https://generativelanguage.googleapis.com/v1beta/openai/"
     )
-    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME") or "gemini-2.5-flash"
+    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME") or "gemini-3.5-flash-lite"
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.3"))
     LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 

@@ -191,7 +191,7 @@ BUSINESS_TIMEZONE=Asia/Karachi
 |-------------------------------|-------------------------------|------------------------------------------------|
 | `LLM_API_KEY`                 | *(required)*                  | Key for the primary provider (free Gemini key)  |
 | `LLM_BASE_URL`                | Gemini OpenAI-compatible URL  | Any OpenAI-compatible endpoint                  |
-| `LLM_MODEL_NAME`              | `gemini-2.5-flash`            | Primary model name                              |
+| `LLM_MODEL_NAME`              | `gemini-3.5-flash-lite`       | Primary model name                              |
 | `LLM_FALLBACK_API_KEY`        | `""`                          | Backup provider key (free Groq key); empty = no backup |
 | `LLM_FALLBACK_BASE_URL`       | `https://api.groq.com/openai/v1` | Backup OpenAI-compatible endpoint            |
 | `LLM_FALLBACK_MODEL_NAME`     | `llama-3.3-70b-versatile`     | Backup model, used when the primary errors or is rate-limited |

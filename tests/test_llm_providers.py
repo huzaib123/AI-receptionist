@@ -56,7 +56,7 @@ def llm_env(monkeypatch):
     monkeypatch.setattr(agent_module, "_agent_executor", None)
     for name, value in {
         "LLM_API_KEY": "", "OPENAI_API_KEY": "", "LLM_FALLBACK_API_KEY": "",
-        "LLM_MODEL_NAME": "gemini-2.5-flash",
+        "LLM_MODEL_NAME": "gemini-3.5-flash-lite",
     }.items():
         monkeypatch.setattr(settings, name, value)
     monkeypatch.delenv("LLM_MODEL_NAME", raising=False)
@@ -67,7 +67,7 @@ def llm_env(monkeypatch):
 def test_default_is_gemini_free_tier(llm_env):
     llm_env.setattr(settings, "LLM_API_KEY", "gemini-key")
     llm = providers.get_primary_llm()
-    assert llm.model_name == "gemini-2.5-flash"
+    assert llm.model_name == "gemini-3.5-flash-lite"
     assert "generativelanguage.googleapis.com" in str(llm.openai_api_base)
     assert providers.get_fallback_llm() is None
 
