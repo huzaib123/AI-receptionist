@@ -44,8 +44,12 @@ class Settings:
     GOOGLE_SERVICE_ACCOUNT_FILE: str = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "")
     GOOGLE_CALENDAR_ID: str = os.getenv("GOOGLE_CALENDAR_ID", "primary")
 
+    # ── Business Profile ───────────────────────────────────
+    # JSON file with name, services, prices, hours, FAQ, WhatsApp, etc.
+    BUSINESS_PROFILE_FILE: str = os.getenv("BUSINESS_PROFILE_FILE", "config/business_profile.json")
+
     # ── Business Rules ─────────────────────────────────────
-    BUSINESS_TIMEZONE: str = os.getenv("BUSINESS_TIMEZONE", "Asia/Karachi")
+    BUSINESS_TIMEZONE: str = os.getenv("BUSINESS_TIMEZONE", "Asia/Kuala_Lumpur")
     BUSINESS_HOURS_START: int = int(os.getenv("BUSINESS_HOURS_START", "9"))
     BUSINESS_HOURS_END: int = int(os.getenv("BUSINESS_HOURS_END", "19"))
     BUSINESS_DAYS: list[int] = _parse_int_list(

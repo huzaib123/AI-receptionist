@@ -35,3 +35,7 @@ app/static/
 .idea/
 *.swp
 *.swo
+config/business_profile.json
+
+# ── Sales (private lead lists, not for a public repo) ──
+sales/

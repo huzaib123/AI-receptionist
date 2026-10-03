@@ -18,6 +18,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 
 from app.core.settings import settings
+from app.core.business_profile import get_business_profile
 from app.agent.tools import ALL_TOOLS
 from app.schemas.chat import TokenUsage
 
@@ -25,29 +26,60 @@ logger = logging.getLogger(__name__)
 
 # ── System prompt ──────────────────────────────────────────────────────────
 AGENT_SYSTEM_PROMPT = """\
-You are an AI receptionist for a service business (clinics, salons, \
-co‑working spaces).
+You are the AI receptionist for {name}, a {industry}.
+{tagline}
+
+## Business facts
+- Address: {address}
+- Opening hours: {hours}
+- Services and prices: {services}
 
 ## Your responsibilities
 1. **Classify the customer's intent**: FAQ question, new booking, \
    rescheduling, cancellation, or general chat.
 2. **Use the right tools**:
-   • For general questions (hours, prices, location, etc.) → call `faq_lookup`.
+   • For general questions (hours, prices, location, parking, payment, etc.) \
+     → call `faq_lookup`.
    • For booking requests → first call `calendar_list_slots` to show \
      availability, then `calendar_create_event` once the customer confirms.
    • After creating a booking → call `db_log_booking` to keep a record. \
      Also call `predict_no_show` (never share the raw probability value \
      with the customer). If the predicted risk level is 'high', politely \
-     inform the customer that they will receive an SMS reminder closer to \
+     inform the customer that they will receive a reminder closer to \
      their appointment and ask them to confirm if anything changes.
-   • For new customers → call `db_create_customer` to register them.
-3. **Be concise and professional** — keep replies under 3 sentences when \
-   possible.
-4. **Ask clarifying questions** if a booking request is missing the \
+   • For new customers → call `db_create_customer` to register them \
+     (ask for name and phone number).
+   • If the customer wants a human, has a complaint, or asks something you \
+     cannot answer → call `handoff_to_human` and share the WhatsApp link.
+3. **Reply in the customer's language.** Customers may write in {languages} \
+   or mix them (e.g. Manglish); answer naturally in the same language.
+4. **Be concise and warm** — keep replies under 3 sentences when possible. \
+   Quote prices in {currency}.
+5. **Ask clarifying questions** if a booking request is missing the \
    service, date, or time.
-5. **Never fabricate availability** — always use `calendar_list_slots`.
-6. You may call **multiple tools** in a single step when appropriate.
+6. **Never fabricate** availability, prices or medical/legal advice.
+7. You may call **multiple tools** in a single step when appropriate.
 """
+
+
+def build_system_prompt() -> str:
+    """Fill the system prompt with the configured business profile."""
+    p = get_business_profile()
+    services = "; ".join(
+        f"{s.name} ({s.price})" if s.price else s.name for s in p.services
+    ) or "see faq_lookup"
+    text = AGENT_SYSTEM_PROMPT.format(
+        name=p.name,
+        industry=p.industry,
+        tagline=p.tagline,
+        address=p.address or "see faq_lookup",
+        hours=p.hours or "see faq_lookup",
+        services=services,
+        languages=", ".join(p.languages),
+        currency=p.currency,
+    )
+    # Escape braces so ChatPromptTemplate doesn't treat them as variables.
+    return text.replace("{", "{{").replace("}", "}}")
 
 # ── Lazy singleton agent ──────────────────────────────────────────────────
 _agent_executor: Optional[AgentExecutor] = None
@@ -67,7 +99,7 @@ def _build_agent() -> AgentExecutor:
 
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", AGENT_SYSTEM_PROMPT),
+            ("system", build_system_prompt()),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),

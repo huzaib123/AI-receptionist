@@ -1,0 +1,27 @@
+{
+  "name": "Glow Dental & Aesthetics",
+  "industry": "dental clinic",
+  "tagline": "Gentle dental care in the heart of SS15",
+  "address": "12, Jalan SS15/4D, 47500 Subang Jaya, Selangor",
+  "phone": "+60 3-5600 0000",
+  "whatsapp": "60123456789",
+  "email": "hello@glowdental.example",
+  "timezone": "Asia/Kuala_Lumpur",
+  "currency": "RM",
+  "languages": ["English", "Bahasa Malaysia", "中文"],
+  "brand_color": "#0f766e",
+  "hours": "Monday-Saturday 9:00 AM - 7:00 PM. Closed on Sundays and public holidays.",
+  "services": [
+    {"name": "Scaling & polishing", "price": "RM 120", "duration_min": 45},
+    {"name": "Tooth filling", "price": "from RM 100", "duration_min": 45},
+    {"name": "Teeth whitening", "price": "RM 900", "duration_min": 90},
+    {"name": "Invisalign consultation", "price": "Free", "duration_min": 30}
+  ],
+  "faq": {
+    "parking": "Street parking is available along Jalan SS15/4D, and there is covered parking at SS15 Courtyard, a 2-minute walk away.",
+    "payment": "We accept cash, debit/credit cards, DuitNow QR, Touch 'n Go eWallet and GrabPay.",
+    "insurance": "We are a panel clinic for most major insurers and company panels. Please bring your panel card or letter of guarantee.",
+    "cancellation": "You can reschedule or cancel free of charge up to 4 hours before your appointment.",
+    "location": "We are at 12, Jalan SS15/4D, Subang Jaya, about 5 minutes' walk from SS15 LRT station."
+  }
+}
