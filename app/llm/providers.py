@@ -51,11 +51,18 @@ def get_primary_llm(has_fallback: bool = False) -> ChatOpenAI:
 
 
 def get_fallback_llm() -> Optional[ChatOpenAI]:
-    """The backup chat model, or None when no backup key is set."""
-    if not settings.LLM_FALLBACK_API_KEY:
+    """The backup chat model, or None when no backup is configured."""
+    if settings.LLM_FALLBACK_MODEL_NAME.lower() == "none":
+        return None
+    api_key = settings.LLM_FALLBACK_API_KEY
+    if not api_key and settings.LLM_API_KEY and (
+        settings.LLM_FALLBACK_BASE_URL.rstrip("/") == settings.LLM_BASE_URL.rstrip("/")
+    ):
+        api_key = settings.LLM_API_KEY  # same provider: reuse the primary key
+    if not api_key:
         return None
     return _chat_model(
-        settings.LLM_FALLBACK_API_KEY,
+        api_key,
         settings.LLM_FALLBACK_BASE_URL,
         settings.LLM_FALLBACK_MODEL_NAME,
         retries=2,

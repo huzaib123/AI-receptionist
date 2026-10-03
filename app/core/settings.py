@@ -26,20 +26,21 @@ class Settings:
     """Application‑wide settings sourced from environment variables."""
 
     # ── LLM ────────────────────────────────────────────────
-    # Any OpenAI-compatible endpoint works. The default is Google Gemini's
-    # free tier; a second free provider (Groq) can be set as a backup that
-    # takes over when the primary errors or hits its rate limit.
+    # Any OpenAI-compatible endpoint works. The default is Groq's free tier
+    # (no card needed). A backup model takes over when the primary errors or
+    # hits its rate limit; by default it is a smaller Groq model on the same
+    # key, which has its own separate free quota.
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
-    LLM_BASE_URL: str = (
-        os.getenv("LLM_BASE_URL") or "https://generativelanguage.googleapis.com/v1beta/openai/"
-    )
-    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME") or "gemini-3.5-flash-lite"
+    LLM_BASE_URL: str = os.getenv("LLM_BASE_URL") or "https://api.groq.com/openai/v1"
+    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME") or "llama-3.3-70b-versatile"
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.3"))
     LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 
+    # Leave the key empty to reuse LLM_API_KEY when the backup is on the same
+    # provider. Set LLM_FALLBACK_MODEL_NAME=none to turn the backup off.
     LLM_FALLBACK_API_KEY: str = os.getenv("LLM_FALLBACK_API_KEY", "")
     LLM_FALLBACK_BASE_URL: str = os.getenv("LLM_FALLBACK_BASE_URL") or "https://api.groq.com/openai/v1"
-    LLM_FALLBACK_MODEL_NAME: str = os.getenv("LLM_FALLBACK_MODEL_NAME") or "llama-3.3-70b-versatile"
+    LLM_FALLBACK_MODEL_NAME: str = os.getenv("LLM_FALLBACK_MODEL_NAME") or "llama-3.1-8b-instant"
 
     # Legacy: deployments configured only with OPENAI_API_KEY keep using OpenAI.
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")

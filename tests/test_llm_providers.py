@@ -51,12 +51,16 @@ def _serve(status: int, reply: str = ""):
     return server, f"http://127.0.0.1:{server.server_port}/v1", hits
 
 
+GROQ = "https://api.groq.com/openai/v1"
+
+
 @pytest.fixture
 def llm_env(monkeypatch):
     monkeypatch.setattr(agent_module, "_agent_executor", None)
     for name, value in {
         "LLM_API_KEY": "", "OPENAI_API_KEY": "", "LLM_FALLBACK_API_KEY": "",
-        "LLM_MODEL_NAME": "gemini-3.5-flash-lite",
+        "LLM_BASE_URL": GROQ, "LLM_MODEL_NAME": "llama-3.3-70b-versatile",
+        "LLM_FALLBACK_BASE_URL": GROQ, "LLM_FALLBACK_MODEL_NAME": "llama-3.1-8b-instant",
     }.items():
         monkeypatch.setattr(settings, name, value)
     monkeypatch.delenv("LLM_MODEL_NAME", raising=False)
@@ -64,12 +68,29 @@ def llm_env(monkeypatch):
     agent_module._agent_executor = None
 
 
-def test_default_is_gemini_free_tier(llm_env):
-    llm_env.setattr(settings, "LLM_API_KEY", "gemini-key")
+def test_default_is_groq_with_same_key_backup(llm_env):
+    llm_env.setattr(settings, "LLM_API_KEY", "gsk-key")
     llm = providers.get_primary_llm()
-    assert llm.model_name == "gemini-3.5-flash-lite"
-    assert "generativelanguage.googleapis.com" in str(llm.openai_api_base)
+    assert llm.model_name == "llama-3.3-70b-versatile"
+    assert "api.groq.com" in str(llm.openai_api_base)
+    fb = providers.get_fallback_llm()
+    assert fb is not None
+    assert fb.model_name == "llama-3.1-8b-instant"
+    assert fb.openai_api_key.get_secret_value() == "gsk-key"
+
+
+def test_backup_can_be_turned_off(llm_env):
+    llm_env.setattr(settings, "LLM_API_KEY", "gsk-key")
+    llm_env.setattr(settings, "LLM_FALLBACK_MODEL_NAME", "none")
     assert providers.get_fallback_llm() is None
+
+
+def test_backup_on_other_provider_needs_its_own_key(llm_env):
+    llm_env.setattr(settings, "LLM_API_KEY", "gsk-key")
+    llm_env.setattr(settings, "LLM_FALLBACK_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+    assert providers.get_fallback_llm() is None
+    llm_env.setattr(settings, "LLM_FALLBACK_API_KEY", "gemini-key")
+    assert providers.get_fallback_llm() is not None
 
 
 def test_legacy_openai_key_keeps_openai(llm_env):
@@ -77,14 +98,7 @@ def test_legacy_openai_key_keeps_openai(llm_env):
     llm = providers.get_primary_llm()
     assert llm.model_name == "gpt-4o-mini"
     assert not llm.openai_api_base
-
-
-def test_fallback_model_configured(llm_env):
-    llm_env.setattr(settings, "LLM_FALLBACK_API_KEY", "groq-key")
-    fb = providers.get_fallback_llm()
-    assert fb is not None
-    assert fb.model_name == "llama-3.3-70b-versatile"
-    assert "api.groq.com" in str(fb.openai_api_base)
+    assert providers.get_fallback_llm() is None
 
 
 def test_agent_switches_to_backup_when_primary_is_rate_limited(llm_env):
@@ -100,7 +114,7 @@ def test_agent_switches_to_backup_when_primary_is_rate_limited(llm_env):
 
         assert result["reply"] == "Hi! How can I help?"
         assert primary_hits, "primary provider should be tried first"
-        assert backup_hits[0]["model"] == "llama-3.3-70b-versatile"
+        assert backup_hits[0]["model"] == "llama-3.1-8b-instant"
         assert backup_hits[0]["tools"], "backup must receive the receptionist tools"
     finally:
         primary.shutdown()
