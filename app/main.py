@@ -14,7 +14,7 @@ import os
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.settings import settings
@@ -24,7 +24,7 @@ from app.agent.agent import run_agent
 from app.db.session import get_db, engine, Base
 from app.db import crud
 from app.ml.no_show_model import predict_no_show_prob
-from app.core.security import verify_admin_key, check_rate_limit
+from app.core.security import admin_key_is_strong, check_rate_limit, verify_admin_key
 from app.core.business_profile import get_business_profile
 
 # ── Logging ────────────────────────────────────────────────────────────────
@@ -40,16 +40,43 @@ app = FastAPI(
     title="AI Receptionist",
     version="0.2.0",
     description="Conversational AI receptionist for service businesses — now with database storage and admin endpoints.",
+    docs_url="/docs" if settings.ENABLE_API_DOCS else None,
+    redoc_url="/redoc" if settings.ENABLE_API_DOCS else None,
+    openapi_url="/openapi.json" if settings.ENABLE_API_DOCS else None,
 )
 
-# Enable CORS for frontend communication
+# The widget runs on client websites, so any origin may call the API. No
+# cookies are used, so credentials stay off and that can't be abused.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Restrict to frontend domains in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.CORS_ALLOW_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Admin-API-Key"],
 )
+
+# Bigger bodies than any real chat message are refused before being read.
+MAX_BODY_BYTES = 16 * 1024
+
+
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    length = request.headers.get("content-length")
+    if length and (not length.isdigit() or int(length) > MAX_BODY_BYTES):
+        return JSONResponse({"detail": "Request too large."}, status_code=413)
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    if response.headers.get("content-type", "").startswith("application/json"):
+        response.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+    return response
+
+
+if not admin_key_is_strong(settings.ADMIN_API_KEY):
+    logger.warning("ADMIN_API_KEY is missing or weak, so the admin endpoints are disabled.")
 
 # ── Metrics Registry ────────────────────────────────────────────────────────
 class Metrics:
@@ -133,7 +160,7 @@ def get_admin_bookings_today(db: Session = Depends(get_db)):
         return res
     except Exception as exc:
         logger.exception("Failed to retrieve today's bookings")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail="Internal error.") from exc
 
 
 @app.get("/admin/stats", dependencies=[Depends(verify_admin_key)])
@@ -152,10 +179,10 @@ def get_admin_stats(db: Session = Depends(get_db)):
         return stats
     except Exception as exc:
         logger.exception("Failed to compute booking statistics")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail="Internal error.") from exc
 
 
-@app.post("/ml/no_show", response_model=NoShowResponse)
+@app.post("/ml/no_show", response_model=NoShowResponse, dependencies=[Depends(check_rate_limit)])
 def get_no_show_prediction(payload: NoShowRequest):
     """
     Predict no-show risk probability for a booking slot based on customer history and scheduled slot parameters.
@@ -172,7 +199,7 @@ def get_no_show_prediction(payload: NoShowRequest):
         return NoShowResponse(no_show_probability=prob, risk_level=risk)
     except Exception as exc:
         logger.exception("No-show prediction endpoint failed")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail="Internal error.") from exc
 
 
 @app.post("/chat", response_model=ChatResponse, dependencies=[Depends(check_rate_limit)])
@@ -192,9 +219,11 @@ async def chat(payload: ChatRequest):
     except Exception as exc:
         Metrics.tool_error_count += 1
         logger.exception("Agent call failed")
+        # Provider error text can name models, keys' projects or limits;
+        # it stays in the server log and the visitor gets a plain message.
         raise HTTPException(
             status_code=502,
-            detail=f"Agent error: {exc}",
+            detail="The receptionist is temporarily unavailable. Please try again shortly.",
         ) from exc
 
     elapsed_ms = (time.perf_counter() - start) * 1000

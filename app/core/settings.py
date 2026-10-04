@@ -65,8 +65,36 @@ class Settings:
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
 
     # ── Security ───────────────────────────────────────────
-    ADMIN_API_KEY: str = os.getenv("ADMIN_API_KEY", "dev_secret_key_123")
-    CHAT_RATE_LIMIT_PER_MINUTE: int = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "60"))
+    # Admin endpoints stay locked (503) until this is set to 24+ random
+    # characters, e.g. the output of: python3 -c "import secrets;print(secrets.token_urlsafe(32))"
+    ADMIN_API_KEY: str = os.getenv("ADMIN_API_KEY", "")
+    ADMIN_FAILED_ATTEMPTS_PER_HOUR: int = int(os.getenv("ADMIN_FAILED_ATTEMPTS_PER_HOUR", "10"))
+
+    # Chat limits. Per visitor IP per minute and per day, plus one shared cap
+    # across all visitors so a flood can't use up the LLM provider's quota.
+    CHAT_RATE_LIMIT_PER_MINUTE: int = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "15"))
+    CHAT_DAILY_LIMIT_PER_IP: int = int(os.getenv("CHAT_DAILY_LIMIT_PER_IP", "200"))
+    CHAT_GLOBAL_LIMIT_PER_MINUTE: int = int(os.getenv("CHAT_GLOBAL_LIMIT_PER_MINUTE", "40"))
+
+    # Proxies whose CF-Connecting-IP / X-Forwarded-For header is trusted for
+    # the visitor's real IP. cloudflared on the same machine connects from
+    # localhost, so that is the default.
+    TRUSTED_PROXY_IPS: list[str] = [
+        ip.strip() for ip in os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1").split(",") if ip.strip()
+    ]
+
+    # Browser origins allowed to call the API. "*" lets the widget run on any
+    # client website; it is safe because no cookies or credentials are used.
+    CORS_ALLOW_ORIGINS: list[str] = [
+        o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",") if o.strip()
+    ]
+
+    # Interactive API docs (/docs, /redoc). Off by default so the public
+    # server doesn't advertise every endpoint; set true while testing.
+    ENABLE_API_DOCS: bool = os.getenv("ENABLE_API_DOCS", "false").lower() in ("1", "true", "yes")
+
+    # Chat sessions kept in memory; the oldest are dropped beyond this.
+    MAX_CHAT_SESSIONS: int = int(os.getenv("MAX_CHAT_SESSIONS", "2000"))
 
     # ── Database ───────────────────────────────────────────
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./receptionist.db")

@@ -219,7 +219,7 @@ def db_create_customer(name: str, phone: str = "", email: str = "") -> dict:
         phone: Phone number (optional).
         email: Email address (optional).
     """
-    logger.info("🔧 db_create_customer  name=%s  phone=%s  email=%s", name, phone, email)
+    logger.info("🔧 db_create_customer  has_phone=%s  has_email=%s", bool(phone), bool(email))
 
     with get_db_session() as db:
         # Check if customer already exists by phone or email

@@ -15,12 +15,14 @@ class ChatRequest(BaseModel):
     message: str = Field(
         ...,
         min_length=1,
-        max_length=4000,
+        max_length=1000,
         description="The user's message to the AI receptionist.",
         examples=["I'd like to book a haircut for tomorrow at 3 PM."],
     )
     session_id: Optional[str] = Field(
         default=None,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9_-]+$",
         description="The session identifier to track chat history context.",
     )
 

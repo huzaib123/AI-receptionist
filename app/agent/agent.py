@@ -10,11 +10,15 @@ request and cached, just like the old plain‑chat chain.
 from __future__ import annotations
 
 import logging
+from collections import OrderedDict
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Dict, Any, Optional
 
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+try:  # LangChain 1.x keeps the classic AgentExecutor in langchain-classic
+    from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
+except ImportError:  # LangChain 0.3 (older installs on Python 3.9)
+    from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from langchain_core.callbacks import BaseCallbackHandler
@@ -177,8 +181,9 @@ class _UsageCounter(BaseCallbackHandler):
         self.usage.total_tokens += counts.get("total_tokens", 0) or 0
 
 
-# In-memory session history store
-_session_history: dict[str, list[BaseMessage]] = {}
+# In-memory session history, oldest-used first. Capped so that a flood of
+# made-up session ids can't exhaust the server's memory.
+_session_history: "OrderedDict[str, list[BaseMessage]]" = OrderedDict()
 
 # ── Public API ─────────────────────────────────────────────────────────────
 async def run_agent(user_message: str, session_id: Optional[str] = None) -> Dict[str, Any]:
@@ -196,6 +201,9 @@ async def run_agent(user_message: str, session_id: Optional[str] = None) -> Dict
     chat_history = []
     if session_id:
         chat_history = _session_history.setdefault(session_id, [])
+        _session_history.move_to_end(session_id)
+        while len(_session_history) > settings.MAX_CHAT_SESSIONS:
+            _session_history.popitem(last=False)
 
     # Feed recent history only: every past message is resent on every LLM call.
     counter = _UsageCounter()
@@ -208,10 +216,11 @@ async def run_agent(user_message: str, session_id: Optional[str] = None) -> Dict
 
     # Save turn to history if session_id is provided
     if session_id:
-        _session_history[session_id].append(HumanMessage(content=user_message))
-        _session_history[session_id].append(AIMessage(content=reply))
-        # Prevent memory leak by keeping last 30 messages
-        _session_history[session_id] = _session_history[session_id][-30:]
+        # The session may have been evicted while the model was answering.
+        history = _session_history.get(session_id, chat_history)
+        history += [HumanMessage(content=user_message), AIMessage(content=reply)]
+        # Keep the last 30 messages per session
+        _session_history[session_id] = history[-30:]
 
     # Collect which tools were called
     tools_called: list[str] = []
