@@ -200,6 +200,7 @@ BUSINESS_TIMEZONE=Asia/Karachi
 | `LLM_LOCAL_MODEL_NAME`        | `qwen3:8b`                    | Local backup model                              |
 | `LLM_LOCAL_API_KEY`           | `ollama`                      | Any value works for Ollama                      |
 | `LLM_LOCAL_TIMEOUT_SECONDS`   | `90`                          | Local models are slower; allow longer replies   |
+| `LLM_LOCAL_SYSTEM_SUFFIX`     | `/no_think`                   | Added to the local model's prompt; stops Qwen3's slow thinking step; empty for other models |
 | `LLM_TEMPERATURE`             | `0.3`                         | Sampling temperature                           |
 | `LLM_TIMEOUT_SECONDS`         | `30`                          | Per-request timeout                            |
 | `OPENAI_API_KEY`              | `""`                          | Legacy: used with `gpt-4o-mini` only when `LLM_API_KEY` is empty |

@@ -54,6 +54,9 @@ class Settings:
     LLM_LOCAL_MODEL_NAME: str = os.getenv("LLM_LOCAL_MODEL_NAME") or "qwen3:8b"
     LLM_LOCAL_API_KEY: str = os.getenv("LLM_LOCAL_API_KEY") or "ollama"
     LLM_LOCAL_TIMEOUT_SECONDS: float = float(os.getenv("LLM_LOCAL_TIMEOUT_SECONDS", "90"))
+    # Appended to the local model's system prompt. "/no_think" stops Qwen3
+    # from reasoning before every reply; set it empty for other local models.
+    LLM_LOCAL_SYSTEM_SUFFIX: str = os.getenv("LLM_LOCAL_SYSTEM_SUFFIX", "/no_think\n")
 
     # Legacy: deployments configured only with OPENAI_API_KEY keep using OpenAI.
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")

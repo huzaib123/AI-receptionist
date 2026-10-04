@@ -138,6 +138,8 @@ def test_mac_backup_answers_when_both_groq_models_fail(llm_env):
         assert primary_hits and backup_hits
         assert local_hits[0]["model"] == "qwen3:8b"
         assert "reasoning_effort" not in local_hits[0]
+        assert local_hits[0]["messages"][0]["content"].rstrip().endswith("/no_think")
+        assert "/no_think" not in backup_hits[0]["messages"][0]["content"]
         assert result["usage"].total_tokens == 2
     finally:
         primary.shutdown()

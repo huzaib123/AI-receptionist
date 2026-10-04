@@ -95,26 +95,37 @@ def _build_agent() -> AgentExecutor:
     if _agent_executor is not None:
         return _agent_executor
 
-    backups = [m for m in (get_fallback_llm(), get_local_llm()) if m is not None]
-    llm = get_primary_llm(has_fallback=bool(backups))
+    fallback_llm, local_llm = get_fallback_llm(), get_local_llm()
+    llm = get_primary_llm(has_fallback=bool(fallback_llm or local_llm))
 
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", build_system_prompt()),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ]
-    )
+    def make_prompt(system: str) -> ChatPromptTemplate:
+        return ChatPromptTemplate.from_messages(
+            [
+                ("system", system),
+                MessagesPlaceholder(variable_name="chat_history"),
+                ("human", "{input}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
+            ]
+        )
 
+    system = build_system_prompt()
+    prompt = make_prompt(system)
     tools = agent_tools()
     agent = create_tool_calling_agent(llm, tools, prompt)
-    if backups:
-        # If the primary provider errors or is rate-limited, the same step is
-        # retried on each backup in turn so customers still get a reply.
-        agent = agent.with_fallbacks(
-            [create_tool_calling_agent(m, tools, prompt) for m in backups]
-        )
+
+    # If the primary provider errors or is rate-limited, the same step is
+    # retried on each backup in turn so customers still get a reply.
+    backup_agents = []
+    if fallback_llm is not None:
+        backup_agents.append(create_tool_calling_agent(fallback_llm, tools, prompt))
+    if local_llm is not None:
+        # Qwen3 "thinks" at length before answering unless told /no_think,
+        # which on a laptop adds tens of seconds per reply.
+        local_system = system + settings.LLM_LOCAL_SYSTEM_SUFFIX
+        backup_agents.append(create_tool_calling_agent(local_llm, tools, make_prompt(local_system)))
+    if backup_agents:
+        agent = agent.with_fallbacks(backup_agents)
+    backups = [m for m in (fallback_llm, local_llm) if m is not None]
 
     _agent_executor = AgentExecutor(
         agent=agent,
