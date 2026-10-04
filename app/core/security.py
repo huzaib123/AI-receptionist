@@ -74,6 +74,7 @@ _lock = threading.Lock()
 _per_minute: dict[str, deque] = defaultdict(deque)
 _per_day: dict[str, deque] = defaultdict(deque)
 _global_minute: dict[str, deque] = defaultdict(deque)
+_global_day: dict[str, deque] = defaultdict(deque)
 _admin_failures: dict[str, deque] = defaultdict(deque)
 _last_sweep = 0.0
 
@@ -127,10 +128,12 @@ def check_rate_limit(request: Request) -> None:
     # Shared cap across every visitor protects the LLM provider's quota.
     _enforce(_global_minute, "all", settings.CHAT_GLOBAL_LIMIT_PER_MINUTE, 60,
              "We're very busy right now. Please try again in a minute.")
+    _enforce(_global_day, "all", settings.CHAT_GLOBAL_DAILY_LIMIT, 86400,
+             "Chat is unavailable for the rest of today. Please contact us on WhatsApp instead.")
 
 
 def reset_rate_limits() -> None:
     """Clear all counters (used by tests)."""
     with _lock:
-        for table in (_per_minute, _per_day, _global_minute, _admin_failures):
+        for table in (_per_minute, _per_day, _global_minute, _global_day, _admin_failures):
             table.clear()

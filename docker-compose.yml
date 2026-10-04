@@ -7,10 +7,10 @@ services:
     restart: always
     environment:
       POSTGRES_USER: receptionist
-      POSTGRES_PASSWORD: secretpassword_987
+      # Set POSTGRES_PASSWORD in .env; compose refuses to start without it.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: receptionist_prod
-    ports:
-      - "5432:5432"
+    # No published port: only the backend container can reach the database.
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -20,12 +20,13 @@ services:
       dockerfile: Dockerfile
     container_name: receptionist_app
     restart: always
+    # Bound to this machine only; the public reaches it through cloudflared.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql://receptionist:secretpassword_987@db:5432/receptionist_prod
+      - DATABASE_URL=postgresql://receptionist:${POSTGRES_PASSWORD}@db:5432/receptionist_prod
       - LLM_API_KEY=${LLM_API_KEY}
       - LLM_BASE_URL=${LLM_BASE_URL:-}
       - LLM_MODEL_NAME=${LLM_MODEL_NAME:-}
@@ -39,13 +40,14 @@ services:
       - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.3}
       - ADMIN_API_KEY=${ADMIN_API_KEY:-}
       - CHAT_RATE_LIMIT_PER_MINUTE=${CHAT_RATE_LIMIT_PER_MINUTE:-15}
-      - CHAT_DAILY_LIMIT_PER_IP=${CHAT_DAILY_LIMIT_PER_IP:-200}
+      - CHAT_DAILY_LIMIT_PER_IP=${CHAT_DAILY_LIMIT_PER_IP:-60}
+      - CHAT_GLOBAL_DAILY_LIMIT=${CHAT_GLOBAL_DAILY_LIMIT:-800}
       - CHAT_GLOBAL_LIMIT_PER_MINUTE=${CHAT_GLOBAL_LIMIT_PER_MINUTE:-40}
       - TRUSTED_PROXY_IPS=${TRUSTED_PROXY_IPS:-127.0.0.1,::1}
       - ENABLE_API_DOCS=${ENABLE_API_DOCS:-false}
       - GOOGLE_SERVICE_ACCOUNT_FILE=${GOOGLE_SERVICE_ACCOUNT_FILE}
       - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID:-primary}
-      - BUSINESS_TIMEZONE=${BUSINESS_TIMEZONE:-Asia/Karachi}
+      - BUSINESS_TIMEZONE=${BUSINESS_TIMEZONE:-Asia/Kuala_Lumpur}
       - BUSINESS_HOURS_START=${BUSINESS_HOURS_START:-9}
       - BUSINESS_HOURS_END=${BUSINESS_HOURS_END:-19}
 

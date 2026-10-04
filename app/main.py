@@ -59,6 +59,37 @@ app.add_middleware(
 MAX_BODY_BYTES = 16 * 1024
 
 
+class BodySizeLimitMiddleware:
+    """Stops reading a body once it passes MAX_BODY_BYTES.
+
+    The Content-Length check below can't see chunked uploads, which carry no
+    length header, so the bytes are also counted as they arrive.
+    """
+
+    def __init__(self, app, max_bytes: int) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        received = 0
+
+        async def limited_receive():
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.max_bytes:
+                    raise HTTPException(status_code=413, detail="Request too large.")
+            return message
+
+        await self.app(scope, limited_receive, send)
+
+
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=MAX_BODY_BYTES)
+
+
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
     length = request.headers.get("content-length")
