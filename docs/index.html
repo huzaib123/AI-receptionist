@@ -95,6 +95,11 @@
 .me-card span{color:var(--ink-soft)}
 .say{font-size:18px;max-width:34em}
 .say+.say{margin-top:14px}
+.creds{list-style:none;padding:0;margin:26px 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:34em}
+.creds li{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.creds b{display:block;font:800 24px/1.1 var(--display)}
+.creds span{display:block;font-size:14px;color:var(--ink-soft);margin-top:4px}
+.say.quiet{font-style:italic;color:var(--ink-soft)}
 .promise{list-style:none;padding:0;margin:0;border-top:2px solid var(--ink)}
 .promise li{padding:14px 0 14px 34px;border-bottom:1px solid var(--line);position:relative}
 .promise li:before{content:"";position:absolute;left:4px;top:19px;width:14px;height:8px;border-left:3px solid var(--wa);border-bottom:3px solid var(--wa);transform:rotate(-45deg)}
@@ -243,10 +248,17 @@ details p{color:var(--ink-soft);margin-top:10px;max-width:42em}
         <h2>You deal with me. No agency, no middlemen.</h2>
         <div class="me-card">
           <div class="mono" aria-hidden="true">HW</div>
-          <div><b>Huzaib Wadoo</b><span>Founder, and the person who builds your site</span></div>
+          <div><b>Huzaib Wadoo</b><span>Founder of Aura · Subang Jaya</span></div>
         </div>
-        <p class="say">Aura is my own business, run from Subang Jaya. There is no sales team and no reseller taking a cut. The person you WhatsApp is the person who sets up your website, trains your receptionist and fixes anything that goes wrong.</p>
-        <p class="say">It's 100% legit, and I'm happy to prove it. Meet me in person, get on a video call, or try the full thing free for 14 days before you pay a single ringgit.</p>
+        <p class="say">Hi, I'm Huzaib. I'm a final-year Computer Science student specialising in AI at Taylor's University and UWE Bristol, and I started Aura because I kept seeing good local shops lose customers simply because nobody could reply after closing time.</p>
+        <p class="say">I build every site and train every receptionist myself. When you send a WhatsApp, you reach me, not a sales team. I'd rather look after a handful of businesses well than many businesses badly.</p>
+        <ul class="creds" aria-label="Background">
+          <li><b>AI</b><span>Computer Science degree, AI specialisation</span></li>
+          <li><b>AWS</b><span>Certified Cloud Practitioner</span></li>
+          <li><b>4</b><span>co-authored research papers</span></li>
+          <li><b>3.5+</b><span>GPA, Dean's List</span></li>
+        </ul>
+        <p class="say quiet">Happy to meet for a teh tarik, jump on a video call, or let you try everything free for 14 days before you pay a single ringgit.</p>
         <div class="contact">
           <a class="btn wa" data-wa href="https://wa.me/60168149934">WhatsApp +60 16-814 9934</a>
           <a class="raw" href="mailto:huzaibqayoom@gmail.com">huzaibqayoom@gmail.com</a>
