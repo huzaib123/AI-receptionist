@@ -39,3 +39,9 @@ config/business_profile.json
 
 # ── Sales (private lead lists, not for a public repo) ──
 sales/
+
+# ── Keys and tunnel credentials (never commit) ─────────
+*.pem
+*.key
+*service-account*.json
+.cloudflared/

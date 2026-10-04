@@ -80,7 +80,7 @@ ai-receptionist/
 # 1. Clone & enter the project
 cd ai-receptionist
 
-# 2. Create venv & install
+# 2. Create venv & install (needs Python 3.10 or newer; 3.12 recommended)
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -89,7 +89,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # → Edit .env: set LLM_API_KEY (free Groq key; the backup model reuses it)
 # → Optionally set Google Calendar variables
-# → Optionally change ADMIN_API_KEY from the default
+# → Set ADMIN_API_KEY to a long random value to turn on the admin endpoints
 
 # 4. Train the ML model (first time only)
 python ml/train.py
@@ -206,8 +206,14 @@ BUSINESS_TIMEZONE=Asia/Karachi
 | `OPENAI_API_KEY`              | `""`                          | Legacy: used with `gpt-4o-mini` only when `LLM_API_KEY` is empty |
 | `LOG_LEVEL`                   | `INFO`                        | Python log level                               |
 | `DATABASE_URL`                | `sqlite:///./receptionist.db` | Database URL (SQLite or PostgreSQL)             |
-| `ADMIN_API_KEY`               | `dev_secret_key_123`          | API key for admin dashboard endpoints          |
-| `CHAT_RATE_LIMIT_PER_MINUTE`  | `60`                          | Max chat requests per IP per minute             |
+| `ADMIN_API_KEY`               | `""`                          | Admin API key; admin endpoints are off until it is 24+ characters |
+| `CHAT_RATE_LIMIT_PER_MINUTE`  | `15`                          | Max chat requests per visitor IP per minute     |
+| `CHAT_DAILY_LIMIT_PER_IP`     | `200`                         | Max chat requests per visitor IP per day        |
+| `CHAT_GLOBAL_LIMIT_PER_MINUTE`| `40`                          | Max chat requests per minute across all visitors (protects the LLM quota) |
+| `TRUSTED_PROXY_IPS`           | `127.0.0.1,::1`               | Proxies (e.g. cloudflared) whose forwarded-IP header is trusted |
+| `CORS_ALLOW_ORIGINS`          | `*`                           | Origins allowed to call the API (no cookies are used) |
+| `ENABLE_API_DOCS`             | `false`                       | Serve `/docs` and `/redoc`                      |
+| `MAX_CHAT_SESSIONS`           | `2000`                        | Chat sessions kept in memory                    |
 | `GOOGLE_SERVICE_ACCOUNT_FILE` | `""`                          | Path to service account JSON (empty = stubs)   |
 | `GOOGLE_CALENDAR_ID`          | `primary`                     | Target calendar ID                             |
 | `BUSINESS_TIMEZONE`           | `Asia/Karachi`                | IANA timezone                                  |
@@ -308,7 +314,11 @@ This launches:
 
 ## Security
 
-- **Admin auth**: All `/admin/*` endpoints require `X-Admin-API-Key` header. Change the default key before deploying.
-- **Rate limiting**: In-memory per-IP limiter on `/chat` (default: 60 req/min). Exceeding returns HTTP 429.
-- **CORS**: Configured to allow all origins in dev. Restrict `allow_origins` in production.
+- **Admin auth**: `/admin/*` needs the `X-Admin-API-Key` header, compared in constant time. The endpoints stay off (503) until `ADMIN_API_KEY` is 24+ characters, and 10 wrong keys from one IP lock it out for an hour.
+- **Rate limiting**: `/chat` is limited per visitor per minute and per day, plus a shared cap across all visitors so a flood can't use up the LLM quota. Behind Cloudflare Tunnel the real visitor IP comes from `CF-Connecting-IP`, trusted only from `TRUSTED_PROXY_IPS`.
+- **Input limits**: request bodies over 16 KB are refused, messages are capped at 1,000 characters, session ids at 64 safe characters, and at most `MAX_CHAT_SESSIONS` sessions are kept in memory.
+- **Errors**: provider and database errors are logged on the server only; visitors get a plain message.
+- **Headers**: `nosniff`, `X-Frame-Options: DENY`, HSTS, a strict CSP on API responses and a locked-down `Permissions-Policy`.
+- **CORS**: any origin may call the API so the widget works on client sites; credentials are off because no cookies are used.
+- **API docs**: `/docs` is off unless `ENABLE_API_DOCS=true`.
 - **Secrets**: All credentials loaded from environment variables, never committed to git.

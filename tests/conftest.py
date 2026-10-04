@@ -15,6 +15,14 @@ from app.db.models import Base
 
 
 @pytest.fixture(autouse=True)
+def fresh_rate_limits():
+    from app.core.security import reset_rate_limits
+    reset_rate_limits()
+    yield
+    reset_rate_limits()
+
+
+@pytest.fixture(autouse=True)
 def setup_test_db(monkeypatch):
     """
     Autouse fixture that patches the application's database session

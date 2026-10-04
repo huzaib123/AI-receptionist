@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aura — Website + AI Receptionist for Subang Jaya</title>
 <meta name="description" content="A new website plus an AI receptionist that answers customers 24/7 in English, BM and 中文, quotes your prices and books appointments. Built and supported directly by the owner in Subang Jaya.">
@@ -289,26 +291,6 @@ details p{color:var(--ink-soft);margin-top:10px;max-width:42em}
 
 <script src="consent.js"></script>
 <script src="demo.js"></script>
-<script>
-(function(){
-  // Pre-fill WhatsApp messages, mentioning the visitor's business if the link was personalised.
-  var biz = (new URLSearchParams(location.search).get("name") || "").slice(0,60);
-  [].forEach.call(document.querySelectorAll("[data-wa]"), function(a){
-    var msg = a.getAttribute("data-msg") || "Hi Huzaib, I saw the Aura demo and I'd like to know more.";
-    if (biz) msg += " (" + biz + ")";
-    a.href = "https://wa.me/60168149934?text=" + encodeURIComponent(msg);
-    a.target = "_blank"; a.rel = "noopener";
-  });
-
-  // The signboard's live clock makes "open 24 hours" concrete.
-  var el = document.getElementById("clock");
-  function tick(){
-    var t = new Date().toLocaleTimeString("en-MY",{timeZone:"Asia/Kuala_Lumpur",hour:"numeric",minute:"2-digit"});
-    el.innerHTML = "It's <strong>" + t + "</strong> in Subang Jaya. Your receptionist is answering.";
-  }
-  tick(); setInterval(tick, 30000);
-  document.getElementById("yr").textContent = new Date().getFullYear();
-})();
-</script>
+<script src="site.js"></script>
 </body>
 </html>

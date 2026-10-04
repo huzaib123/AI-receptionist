@@ -11,8 +11,18 @@ from app.main import app
 from app.db.session import get_db_session
 from app.db import crud
 
+import pytest
+
+from app.core.settings import settings
+
 client = TestClient(app)
-HEADERS = {"X-Admin-API-Key": "dev_secret_key_123"}
+STRONG_KEY = "test-admin-key-0123456789abcdef"
+HEADERS = {"X-Admin-API-Key": STRONG_KEY}
+
+
+@pytest.fixture(autouse=True)
+def strong_admin_key(monkeypatch):
+    monkeypatch.setattr(settings, "ADMIN_API_KEY", STRONG_KEY)
 
 
 def test_admin_auth_failed():
