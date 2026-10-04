@@ -195,6 +195,11 @@ BUSINESS_TIMEZONE=Asia/Karachi
 | `LLM_FALLBACK_API_KEY`        | `""`                          | Backup provider key; empty = reuse `LLM_API_KEY` on the same provider |
 | `LLM_FALLBACK_BASE_URL`       | `https://api.groq.com/openai/v1` | Backup OpenAI-compatible endpoint            |
 | `LLM_FALLBACK_MODEL_NAME`     | `openai/gpt-oss-20b`          | Backup model, used when the main one errors or is rate-limited; `none` = off |
+| `LLM_REASONING_EFFORT`        | `""`                          | `low`/`medium`/`high`; empty = `low` for gpt-oss models, not sent to others |
+| `LLM_LOCAL_BASE_URL`          | `""`                          | Last-resort backup on your own machine (Ollama: `http://localhost:11434/v1`); empty = off |
+| `LLM_LOCAL_MODEL_NAME`        | `qwen3:8b`                    | Local backup model                              |
+| `LLM_LOCAL_API_KEY`           | `ollama`                      | Any value works for Ollama                      |
+| `LLM_LOCAL_TIMEOUT_SECONDS`   | `90`                          | Local models are slower; allow longer replies   |
 | `LLM_TEMPERATURE`             | `0.3`                         | Sampling temperature                           |
 | `LLM_TIMEOUT_SECONDS`         | `30`                          | Per-request timeout                            |
 | `OPENAI_API_KEY`              | `""`                          | Legacy: used with `gpt-4o-mini` only when `LLM_API_KEY` is empty |
@@ -210,6 +215,17 @@ BUSINESS_TIMEZONE=Asia/Karachi
 | `BUSINESS_DAYS`               | `0,1,2,3,4,5`                 | Working days (0=Mon, 6=Sun)                    |
 | `BOOKING_BUFFER_MINUTES`      | `15`                          | Gap between appointments                       |
 | `DEFAULT_SLOT_WINDOW_DAYS`    | `14`                          | How far ahead to search                        |
+
+### Mac backup with Ollama (free, runs on your own machine)
+
+When both Groq models hit their free limits, Aura can answer from a model on your own Mac instead of making customers wait.
+
+1. Install Ollama from https://ollama.com/download and run `ollama pull qwen3:8b` (about 5 GB; fits a 16 GB Mac).
+2. If the backend runs on the same Mac, set `LLM_LOCAL_BASE_URL=http://localhost:11434/v1` (inside Docker: `http://host.docker.internal:11434/v1`).
+3. If the backend runs on a server, expose Ollama with a free Cloudflare Tunnel (`cloudflared tunnel --url http://localhost:11434`) and set `LLM_LOCAL_BASE_URL=https://<your-tunnel>/v1`. Protect the tunnel (Cloudflare Access) so strangers can't use your Mac.
+4. Keep the Mac awake and plugged in (System Settings → Battery → prevent sleeping when the display is off). If the Mac is off, Aura still runs on Groq; only the last backup is missing.
+
+A Mac handles about one conversation at a time, with replies in 5–15 seconds.
 
 ---
 

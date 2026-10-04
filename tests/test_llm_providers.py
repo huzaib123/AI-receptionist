@@ -119,3 +119,55 @@ def test_agent_switches_to_backup_when_primary_is_rate_limited(llm_env):
     finally:
         primary.shutdown()
         backup.shutdown()
+
+
+def test_mac_backup_answers_when_both_groq_models_fail(llm_env):
+    primary, primary_url, primary_hits = _serve(429)
+    backup, backup_url, backup_hits = _serve(429)
+    local, local_url, local_hits = _serve(200, "Hello from the Mac!")
+    try:
+        llm_env.setattr(settings, "LLM_API_KEY", "k1")
+        llm_env.setattr(settings, "LLM_BASE_URL", primary_url)
+        llm_env.setattr(settings, "LLM_FALLBACK_API_KEY", "k2")
+        llm_env.setattr(settings, "LLM_FALLBACK_BASE_URL", backup_url)
+        llm_env.setattr(settings, "LLM_LOCAL_BASE_URL", local_url)
+
+        result = asyncio.run(agent_module.run_agent("hello"))
+
+        assert result["reply"] == "Hello from the Mac!"
+        assert primary_hits and backup_hits
+        assert local_hits[0]["model"] == "qwen3:8b"
+        assert "reasoning_effort" not in local_hits[0]
+        assert result["usage"].total_tokens == 2
+    finally:
+        primary.shutdown()
+        backup.shutdown()
+        local.shutdown()
+
+
+def test_gpt_oss_models_use_low_reasoning_effort(llm_env):
+    server, url, hits = _serve(200, "Hi!")
+    try:
+        llm_env.setattr(settings, "LLM_API_KEY", "k1")
+        llm_env.setattr(settings, "LLM_BASE_URL", url)
+        llm_env.setattr(settings, "LLM_FALLBACK_MODEL_NAME", "none")
+        asyncio.run(agent_module.run_agent("hello"))
+        assert hits[0]["reasoning_effort"] == "low"
+    finally:
+        server.shutdown()
+
+
+def test_faq_is_in_the_prompt_instead_of_a_tool(llm_env):
+    server, url, hits = _serve(200, "Hi!")
+    try:
+        llm_env.setattr(settings, "LLM_API_KEY", "k1")
+        llm_env.setattr(settings, "LLM_BASE_URL", url)
+        llm_env.setattr(settings, "LLM_FALLBACK_MODEL_NAME", "none")
+        asyncio.run(agent_module.run_agent("hello"))
+        system = hits[0]["messages"][0]["content"]
+        assert "parking" in system and "Today:" in system
+        assert {t["function"]["name"] for t in hits[0]["tools"]} == {
+            "calendar_list_slots", "calendar_create_event", "handoff_to_human",
+        }
+    finally:
+        server.shutdown()

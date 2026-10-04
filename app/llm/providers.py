@@ -19,14 +19,31 @@ from app.core.settings import settings
 logger = logging.getLogger(__name__)
 
 
-def _chat_model(api_key: str, base_url: Optional[str], model: str, retries: int) -> ChatOpenAI:
+def _reasoning_effort(model: str) -> Optional[str]:
+    if settings.LLM_REASONING_EFFORT:
+        return settings.LLM_REASONING_EFFORT
+    return "low" if "gpt-oss" in model else None
+
+
+def _chat_model(
+    api_key: str,
+    base_url: Optional[str],
+    model: str,
+    retries: int,
+    timeout: Optional[float] = None,
+) -> ChatOpenAI:
+    extra = {}
+    effort = _reasoning_effort(model)
+    if effort:
+        extra["reasoning_effort"] = effort
     return ChatOpenAI(
         model=model,
         temperature=settings.LLM_TEMPERATURE,
         api_key=api_key,  # type: ignore[arg-type]
         base_url=base_url or None,
-        timeout=settings.LLM_TIMEOUT_SECONDS,
+        timeout=timeout or settings.LLM_TIMEOUT_SECONDS,
         max_retries=retries,
+        **extra,
     )
 
 
@@ -65,5 +82,19 @@ def get_fallback_llm() -> Optional[ChatOpenAI]:
         api_key,
         settings.LLM_FALLBACK_BASE_URL,
         settings.LLM_FALLBACK_MODEL_NAME,
-        retries=2,
+        # Fail over quickly when the local model is there to catch it.
+        retries=1 if settings.LLM_LOCAL_BASE_URL else 2,
+    )
+
+
+def get_local_llm() -> Optional[ChatOpenAI]:
+    """The last-resort model on your own machine (e.g. Ollama), or None."""
+    if not settings.LLM_LOCAL_BASE_URL:
+        return None
+    return _chat_model(
+        settings.LLM_LOCAL_API_KEY,
+        settings.LLM_LOCAL_BASE_URL,
+        settings.LLM_LOCAL_MODEL_NAME,
+        retries=0,
+        timeout=settings.LLM_LOCAL_TIMEOUT_SECONDS,
     )

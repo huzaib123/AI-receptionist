@@ -114,6 +114,7 @@ class TestCalendarCreateEvent:
         assert isinstance(result, dict)
         assert result["status"] == "confirmed"
         assert result["customer"] == "Jane Doe"
+        assert "send_reminder" in result
         assert result["service"] == "haircut"
         # booking_id comes from either Google (event ID) or stub (BK-xxxx)
         assert result.get("booking_id")

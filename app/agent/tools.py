@@ -117,15 +117,7 @@ def _stub_create_event(customer: str, service: str, start_time: str) -> dict:
 
 @tool
 def calendar_list_slots(service: str, date_pref: str) -> List[dict]:
-    """List available appointment slots for a given service and preferred date.
-
-    Use this tool when a customer asks about availability or wants to know
-    what times are open for a particular service on a specific date.
-
-    Args:
-        service: The service the customer wants (e.g. 'haircut', 'massage').
-        date_pref: The customer's preferred date (e.g. '2025-06-04', 'tomorrow').
-    """
+    """Open slots for a service. date_pref: YYYY-MM-DD."""
     logger.info("🔧 calendar_list_slots  service=%s  date=%s", service, date_pref)
 
     if gcal_client.is_configured():
@@ -138,17 +130,8 @@ def calendar_list_slots(service: str, date_pref: str) -> List[dict]:
 
 
 @tool
-def calendar_create_event(customer: str, service: str, start_time: str) -> dict:
-    """Create a calendar booking for a customer.
-
-    Use this tool after the customer has confirmed a specific time‑slot.
-    Returns a booking confirmation with a unique reference ID.
-
-    Args:
-        customer: Customer's name.
-        service: The service being booked (e.g. 'haircut').
-        start_time: ISO‑8601 start time for the appointment.
-    """
+def calendar_create_event(customer: str, service: str, start_time: str, phone: str = "") -> dict:
+    """Book a confirmed slot. start_time: ISO-8601. Saves the customer too."""
     logger.info(
         "🔧 calendar_create_event  customer=%s  service=%s  time=%s",
         customer,
@@ -189,11 +172,12 @@ def calendar_create_event(customer: str, service: str, start_time: str) -> dict:
     # Persist to database
     try:
         with get_db_session() as db:
-            # Look up customer by exact name or create a placeholder customer record
-            db_cust = crud.get_customer_by_name(db, customer)
+            # Find the customer by phone, then by exact name, else register them.
+            db_cust = crud.get_customer_by_phone_or_email(db, phone=phone or None, email=None) if phone else None
+            db_cust = db_cust or crud.get_customer_by_name(db, customer)
             if not db_cust:
-                logger.info("Customer '%s' not found. Creating placeholder customer.", customer)
-                db_cust = crud.create_customer(db, name=customer)
+                logger.info("Customer '%s' not found. Creating customer record.", customer)
+                db_cust = crud.create_customer(db, name=customer, phone=phone or None)
 
             crud.create_booking(
                 db=db,
@@ -213,7 +197,14 @@ def calendar_create_event(customer: str, service: str, start_time: str) -> dict:
                 logger.error("Failed to clean up Google Calendar event %s during rollback: %s", booking_id, del_exc)
         raise exc
 
-    return res
+    # No-show check runs here rather than as a separate agent step, which
+    # would cost another full LLM round trip. Only the flag reaches the model.
+    try:
+        risk = predict_no_show.func(customer, service, dt_val.hour)["risk_level"]
+    except Exception:
+        logger.exception("No-show prediction failed during booking")
+        risk = "low"
+    return {**res, "send_reminder": risk == "high"}
 
 
 @tool
@@ -305,14 +296,7 @@ def db_log_booking(booking_id: str, customer_id: str, notes: str = "") -> str:
 
 @tool
 def faq_lookup(question: str) -> str:
-    """Look up an answer from the FAQ knowledge base.
-
-    Use this tool when a customer asks a general question about the business
-    such as opening hours, location, prices, cancellation policy, etc.
-
-    Args:
-        question: The topic or keyword to look up (e.g. 'hours', 'price', 'parking').
-    """
+    """Look up a business FAQ by keyword, e.g. 'parking', 'payment'."""
     logger.info("🔧 faq_lookup  question=%s", question)
 
     q_lower = question.lower().strip()
@@ -335,16 +319,7 @@ def faq_lookup(question: str) -> str:
 
 @tool
 def handoff_to_human(reason: str, customer_name: str = "") -> dict:
-    """Hand the conversation over to a human staff member via WhatsApp.
-
-    Use this when the customer asks to speak to a person, when the question
-    is outside the FAQ, or for complaints, medical/legal advice or anything
-    you are not sure about.
-
-    Args:
-        reason: Short summary of what the customer needs.
-        customer_name: Customer's name, if known.
-    """
+    """Get a WhatsApp link to staff. reason: short summary of the need."""
     logger.info("🔧 handoff_to_human  reason=%s  customer=%s", reason, customer_name)
 
     profile = get_business_profile()
@@ -353,11 +328,6 @@ def handoff_to_human(reason: str, customer_name: str = "") -> dict:
     return {
         "whatsapp_link": link,
         "phone": profile.phone or None,
-        "message": (
-            "Share the WhatsApp link so the customer can continue with our team."
-            if link
-            else "No WhatsApp number configured; give the customer our phone number instead."
-        ),
     }
 
 
@@ -432,8 +402,9 @@ def predict_no_show(customer_name: str, service: str, hour_of_day: int) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# All tools list — import this in agent.py
+# Tool lists
 # ═══════════════════════════════════════════════════════════════════════════
+# Every tool definition, kept for tests and direct use.
 ALL_TOOLS = [
     calendar_list_slots,
     calendar_create_event,
@@ -444,3 +415,12 @@ ALL_TOOLS = [
     handoff_to_human,
 ]
 
+# The lean set the agent sees. Each tool schema is resent on every LLM call,
+# and every tool step costs another full round trip, so customer records and
+# the no-show check happen inside calendar_create_event, and FAQ answers are
+# placed in the system prompt (faq_lookup is added back only for a large FAQ).
+AGENT_TOOLS = [
+    calendar_list_slots,
+    calendar_create_event,
+    handoff_to_human,
+]
