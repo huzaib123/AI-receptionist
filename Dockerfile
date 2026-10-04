@@ -33,6 +33,10 @@ COPY ml/ ./ml
 # Copy built frontend assets into the FastAPI static files directory
 COPY --from=frontend-builder /build/dist/ ./app/static/
 
+# Run as an unprivileged user so a compromised app can't change the image.
+RUN useradd --create-home --uid 10001 aura && chown -R aura /workspace
+USER aura
+
 EXPOSE 8000
 
 # Run Alembic migrations and startup the Uvicorn application server

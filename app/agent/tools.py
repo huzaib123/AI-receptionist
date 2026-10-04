@@ -14,6 +14,7 @@ import random
 import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional
+from zoneinfo import ZoneInfo
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
@@ -23,6 +24,7 @@ from app.db.session import get_db_session
 from app.db import crud
 from app.ml.no_show_model import predict_no_show_prob
 from app.core.business_profile import get_business_profile
+from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +99,45 @@ def _stub_list_slots(service: str, date_pref: str) -> List[dict]:
     return slots
 
 
+MAX_NAME_LENGTH = 80
+MAX_PHONE_LENGTH = 32
+MAX_BOOKING_DAYS_AHEAD = 60
+
+
+def _parse_local_time(start_time: str) -> Optional[datetime]:
+    """Read an ISO-8601 time as business-local wall time (any offset is dropped)."""
+    try:
+        dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
+    return dt.replace(tzinfo=None)
+
+
+def _check_booking_request(customer: str, service: str, start_time: str, phone: str):
+    """Return (problem, local_datetime). problem is None when the booking is allowed."""
+    if not customer.strip() or len(customer) > MAX_NAME_LENGTH:
+        return "Please give a name of up to 80 characters.", None
+    if not service.strip() or len(service) > MAX_NAME_LENGTH:
+        return "Please choose one of the listed services.", None
+    if len(phone) > MAX_PHONE_LENGTH:
+        return "That phone number doesn't look right.", None
+    dt = _parse_local_time(start_time)
+    if dt is None:
+        return "That time couldn't be read. Please pick one of the offered slots.", None
+    now = datetime.now(ZoneInfo(settings.BUSINESS_TIMEZONE)).replace(tzinfo=None)
+    if dt <= now:
+        return "That time has already passed. Please pick a future slot.", None
+    if dt > now + timedelta(days=MAX_BOOKING_DAYS_AHEAD):
+        return f"Bookings can be made up to {MAX_BOOKING_DAYS_AHEAD} days ahead.", None
+    if (dt.weekday() not in settings.BUSINESS_DAYS
+            or not settings.BUSINESS_HOURS_START <= dt.hour < settings.BUSINESS_HOURS_END):
+        return "That time is outside opening hours.", None
+    with get_db_session() as db:
+        if crud.booking_exists_at(db, dt):
+            return "That slot was just taken. Please pick another one.", None
+    return None, dt
+
+
 def _stub_create_event(customer: str, service: str, start_time: str) -> dict:
     """Generate a fake booking confirmation."""
     confirmation = BookingConfirmation(
@@ -139,6 +180,13 @@ def calendar_create_event(customer: str, service: str, start_time: str, phone: s
         start_time,
     )
 
+    # The model's arguments come from a public chat, so they are checked here
+    # rather than trusted: a bot or a crafted message must not be able to fill
+    # the calendar with junk, past or out-of-hours bookings.
+    problem, dt_val = _check_booking_request(customer, service, start_time, phone)
+    if problem:
+        return {"status": "rejected", "reason": problem}
+
     is_gcal = gcal_client.is_configured()
     try:
         if is_gcal:
@@ -155,19 +203,6 @@ def calendar_create_event(customer: str, service: str, start_time: str, phone: s
 
     booking_id = res["booking_id"]
     event_link = res.get("event_link")
-
-    # Parse start_time to datetime object
-    try:
-        dt_val = datetime.fromisoformat(start_time)
-    except ValueError:
-        try:
-            dt_val = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
-        except ValueError:
-            dt_val = datetime.utcnow()
-
-    # Strip tzinfo for naive local time comparison (in settings timezone context)
-    if dt_val.tzinfo:
-        dt_val = dt_val.replace(tzinfo=None)
 
     # Persist to database
     try:

@@ -15,7 +15,10 @@
   var sid;
   try { sid = localStorage.getItem(SID_KEY); } catch (e) {}
   if (!sid) {
-    sid = 'w_' + Math.random().toString(36).slice(2, 14);
+    // Unguessable id, so nobody can continue someone else's conversation.
+    var bytes = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(bytes);
+    sid = 'w_' + Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
     try { localStorage.setItem(SID_KEY, sid); } catch (e) {}
   }
 

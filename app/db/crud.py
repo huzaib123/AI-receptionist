@@ -111,6 +111,16 @@ def create_booking(
     return db_booking
 
 
+def booking_exists_at(db: Session, datetime_val: datetime) -> bool:
+    """True when a live booking already starts at this exact time."""
+    return (
+        db.query(Booking.id)
+        .filter(Booking.datetime == datetime_val, Booking.status != "cancelled")
+        .first()
+        is not None
+    )
+
+
 def update_booking_notes_and_customer(
     db: Session,
     booking_id: str,

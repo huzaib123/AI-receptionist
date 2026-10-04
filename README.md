@@ -208,8 +208,9 @@ BUSINESS_TIMEZONE=Asia/Karachi
 | `DATABASE_URL`                | `sqlite:///./receptionist.db` | Database URL (SQLite or PostgreSQL)             |
 | `ADMIN_API_KEY`               | `""`                          | Admin API key; admin endpoints are off until it is 24+ characters |
 | `CHAT_RATE_LIMIT_PER_MINUTE`  | `15`                          | Max chat requests per visitor IP per minute     |
-| `CHAT_DAILY_LIMIT_PER_IP`     | `200`                         | Max chat requests per visitor IP per day        |
+| `CHAT_DAILY_LIMIT_PER_IP`     | `60`                          | Max chat requests per visitor IP per day        |
 | `CHAT_GLOBAL_LIMIT_PER_MINUTE`| `40`                          | Max chat requests per minute across all visitors (protects the LLM quota) |
+| `CHAT_GLOBAL_DAILY_LIMIT`     | `800`                         | Max chat requests per day across all visitors (stays under Groq's free daily quota) |
 | `TRUSTED_PROXY_IPS`           | `127.0.0.1,::1`               | Proxies (e.g. cloudflared) whose forwarded-IP header is trusted |
 | `CORS_ALLOW_ORIGINS`          | `*`                           | Origins allowed to call the API (no cookies are used) |
 | `ENABLE_API_DOCS`             | `false`                       | Serve `/docs` and `/redoc`                      |

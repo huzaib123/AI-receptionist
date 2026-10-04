@@ -70,6 +70,23 @@ def test_real_ip_is_read_only_from_a_trusted_proxy(monkeypatch, fake_agent):
     assert client.post("/chat", json={"message": "b"}, headers={"CF-Connecting-IP": "9.9.9.9"}).status_code == 429
 
 
+def test_global_daily_cap_protects_the_llm_quota(monkeypatch, fake_agent):
+    monkeypatch.setattr(settings, "CHAT_GLOBAL_DAILY_LIMIT", 2)
+    monkeypatch.setattr(settings, "TRUSTED_PROXY_IPS", ["testclient"])
+    for ip in ("1.1.1.1", "2.2.2.2"):
+        assert client.post("/chat", json={"message": "hi"}, headers={"CF-Connecting-IP": ip}).status_code == 200
+    r = client.post("/chat", json={"message": "hi"}, headers={"CF-Connecting-IP": "3.3.3.3"})
+    assert r.status_code == 429
+
+
+def test_chunked_body_without_length_is_capped(fake_agent):
+    def chunks():
+        for _ in range(40):
+            yield b"x" * 1024
+    r = client.post("/chat", content=chunks(), headers={"Content-Type": "application/json"})
+    assert r.status_code == 413
+
+
 def test_oversized_and_malformed_input_is_refused(fake_agent):
     assert client.post("/chat", content=b"x" * 20000, headers={"Content-Type": "application/json"}).status_code == 413
     assert client.post("/chat", json={"message": "x" * 1001}).status_code == 422

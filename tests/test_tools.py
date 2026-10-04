@@ -102,13 +102,24 @@ class TestCalendarListSlots:
         assert len(result) >= 1
 
 
+def _next_open_slot(hour: int = 10) -> str:
+    """An ISO time inside opening hours on the next business day."""
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    from app.core.settings import settings
+    day = datetime.now(ZoneInfo(settings.BUSINESS_TIMEZONE)).replace(tzinfo=None) + timedelta(days=1)
+    while day.weekday() not in settings.BUSINESS_DAYS:
+        day += timedelta(days=1)
+    return day.replace(hour=hour, minute=0, second=0, microsecond=0).isoformat()
+
+
 class TestCalendarCreateEvent:
     def test_returns_confirmation(self):
         result = calendar_create_event.invoke(
             {
                 "customer": "Jane Doe",
                 "service": "haircut",
-                "start_time": "2025-06-10T09:00:00",
+                "start_time": _next_open_slot(),
             }
         )
         assert isinstance(result, dict)
@@ -118,6 +129,32 @@ class TestCalendarCreateEvent:
         assert result["service"] == "haircut"
         # booking_id comes from either Google (event ID) or stub (BK-xxxx)
         assert result.get("booking_id")
+
+
+    @pytest.mark.parametrize("start_time", [
+        "2020-01-01T10:00:00",   # in the past
+        "2099-01-01T10:00:00",   # too far ahead
+        "not a time",
+    ])
+    def test_rejects_bad_times(self, start_time):
+        result = calendar_create_event.invoke(
+            {"customer": "Jane Doe", "service": "haircut", "start_time": start_time}
+        )
+        assert result["status"] == "rejected"
+
+    def test_rejects_out_of_hours_and_overlong_fields(self):
+        late = _next_open_slot(hour=23)
+        assert calendar_create_event.invoke(
+            {"customer": "Jane", "service": "haircut", "start_time": late})["status"] == "rejected"
+        assert calendar_create_event.invoke(
+            {"customer": "x" * 200, "service": "haircut", "start_time": _next_open_slot()})["status"] == "rejected"
+
+    def test_rejects_double_booking(self):
+        slot = _next_open_slot(hour=11)
+        first = calendar_create_event.invoke({"customer": "Ann", "service": "haircut", "start_time": slot})
+        assert first["status"] == "confirmed"
+        second = calendar_create_event.invoke({"customer": "Bob", "service": "haircut", "start_time": slot})
+        assert second["status"] == "rejected"
 
 
 class TestDbCreateCustomer:

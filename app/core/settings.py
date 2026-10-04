@@ -73,8 +73,11 @@ class Settings:
     # Chat limits. Per visitor IP per minute and per day, plus one shared cap
     # across all visitors so a flood can't use up the LLM provider's quota.
     CHAT_RATE_LIMIT_PER_MINUTE: int = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "15"))
-    CHAT_DAILY_LIMIT_PER_IP: int = int(os.getenv("CHAT_DAILY_LIMIT_PER_IP", "200"))
+    CHAT_DAILY_LIMIT_PER_IP: int = int(os.getenv("CHAT_DAILY_LIMIT_PER_IP", "60"))
     CHAT_GLOBAL_LIMIT_PER_MINUTE: int = int(os.getenv("CHAT_GLOBAL_LIMIT_PER_MINUTE", "40"))
+    # Groq's free tier allows about 1,000 requests a day per model, so the
+    # daily total stays under it even when many different IPs join in.
+    CHAT_GLOBAL_DAILY_LIMIT: int = int(os.getenv("CHAT_GLOBAL_DAILY_LIMIT", "800"))
 
     # Proxies whose CF-Connecting-IP / X-Forwarded-For header is trusted for
     # the visitor's real IP. cloudflared on the same machine connects from
