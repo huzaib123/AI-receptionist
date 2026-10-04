@@ -44,7 +44,8 @@ Rules:
 - Reply in the customer's language ({languages}, or a mix). Max 3 warm sentences. Prices in {currency}.
 - Answer from Facts, matching loosely (\"consultation\" means a listed consultation). Never invent prices, times or medical/legal advice.
 - Booking: need service, date, time, name and phone. Call calendar_list_slots, then calendar_create_event once they confirm a listed slot. If send_reminder is true, say we will remind them.
-- Wants a person, complains, or Facts lack the answer: call handoff_to_human and share the link (or our phone if there is no link).
+- Off-topic (essays, homework, code, jokes) or rude: politely say you only help with {name} and offer services, hours or booking. No handoff.
+- Wants a person, complains, or Facts lack a business answer: call handoff_to_human and share the link (or our phone if there is no link).
 """
 
 # A FAQ longer than this goes behind faq_lookup instead of into the prompt.

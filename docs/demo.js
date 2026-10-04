@@ -135,9 +135,14 @@
     if(/pay|card|cash|duitnow|tng|ewallet|bayar|付款/.test(x)) return "We accept cash, cards, DuitNow QR, Touch 'n Go eWallet and GrabPay.";
     if(/hi|hello|hai|helo|salam|你好|hey/.test(x)) return l==="ms"?"Hai! Apa yang boleh saya bantu hari ini?":l==="zh"?"您好！今天有什么可以帮您？":"Hi there! How can I help you today?";
     if(/thank|terima kasih|谢谢|tq/.test(x)) return l==="ms"?"Sama-sama! 😊":l==="zh"?"不客气！😊":"You're welcome! 😊";
-    return l==="ms"?"Soalan yang bagus! Saya boleh bantu dengan harga, waktu operasi, lokasi atau tempahan. Untuk perkara lain, saya akan sambungkan anda ke staf kami di WhatsApp.":
-           l==="zh"?"好问题！我可以帮您查询价格、营业时间、地址或预约。其他问题我会转给我们的同事。":
-           "Good question! I can help with prices, opening hours, location and bookings. For anything else, I'll pass you to our team on WhatsApp so a person can answer.";
+    // Rude or off-topic messages get a polite redirect, never praise.
+    if(/\b(fuck|shit|stupid|idiot|bodoh|babi|sial)\b|傻|操/.test(x))
+      return l==="ms"?"Saya di sini untuk membantu dengan "+cur.name+" sahaja. Ada apa-apa yang boleh saya bantu tentang harga, waktu atau tempahan?":
+             l==="zh"?"我只负责 "+cur.name+" 的咨询。需要了解价格、营业时间或预约吗？":
+             "I'm here to help with "+cur.name+" only. Can I help with prices, opening hours or a booking?";
+    return l==="ms"?"Maaf, saya hanya boleh bantu tentang "+cur.name+": harga, waktu operasi, lokasi dan tempahan. Ada soalan tentang kami? Saya boleh sambungkan anda ke staf kami di WhatsApp.":
+           l==="zh"?"抱歉，我只能回答关于 "+cur.name+" 的问题：价格、营业时间、地址和预约。如有其他关于我们的问题，我可以转给同事。":
+           "Sorry, I can only help with questions about "+cur.name+": prices, opening hours, location and bookings. If it's about us and I can't answer, I'll pass you to our team on WhatsApp.";
   }
 
   // Hero copy follows the demo: personalised only while the visitor's own
