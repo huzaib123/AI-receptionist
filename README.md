@@ -222,7 +222,7 @@ When both Groq models hit their free limits, Aura can answer from a model on you
 
 1. Install Ollama from https://ollama.com/download and run `ollama pull qwen3:8b` (about 5 GB; fits a 16 GB Mac).
 2. If the backend runs on the same Mac, set `LLM_LOCAL_BASE_URL=http://localhost:11434/v1` (inside Docker: `http://host.docker.internal:11434/v1`).
-3. If the backend runs on a server, expose Ollama with a free Cloudflare Tunnel (`cloudflared tunnel --url http://localhost:11434`) and set `LLM_LOCAL_BASE_URL=https://<your-tunnel>/v1`. Protect the tunnel (Cloudflare Access) so strangers can't use your Mac.
+3. If the backend runs on a server, don't expose Ollama directly: it has no password, so anyone with the tunnel address could use your Mac. Run the backend on the Mac instead (step 2) and tunnel the backend (`cloudflared tunnel --url http://localhost:8000`).
 4. Keep the Mac awake and plugged in (System Settings → Battery → prevent sleeping when the display is off). If the Mac is off, Aura still runs on Groq; only the last backup is missing.
 
 A Mac handles about one conversation at a time, with replies in 5–15 seconds.
