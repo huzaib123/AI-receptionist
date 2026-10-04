@@ -1,7 +1,7 @@
 """
 LangChain chat pipeline — single‑turn for now.
 
-Uses lazy initialisation: the ChatOpenAI client and Runnable chain are built
+Uses lazy initialisation: the chat model client and Runnable chain are built
 on the **first** call to ``get_chat_reply()`` and cached for all subsequent
 requests.  This avoids a hard crash at import time when the API key is not
 yet configured (e.g. during tests or CI).
@@ -14,9 +14,9 @@ from typing import Tuple, Optional
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
-from langchain_openai import ChatOpenAI
 
 from app.core.settings import settings
+from app.llm.providers import get_fallback_llm, get_primary_llm, primary_model_name
 from app.schemas.chat import TokenUsage
 
 logger = logging.getLogger(__name__)
@@ -44,11 +44,10 @@ def _build_chain() -> Runnable:
     if _chain is not None:
         return _chain
 
-    llm = ChatOpenAI(
-        model=settings.LLM_MODEL_NAME,
-        temperature=settings.LLM_TEMPERATURE,
-        api_key=settings.OPENAI_API_KEY,  # type: ignore[arg-type]
-    )
+    fallback_llm = get_fallback_llm()
+    llm = get_primary_llm(has_fallback=fallback_llm is not None)
+    if fallback_llm is not None:
+        llm = llm.with_fallbacks([fallback_llm])  # type: ignore[assignment]
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -60,7 +59,7 @@ def _build_chain() -> Runnable:
     _chain = prompt | llm
     logger.info(
         "LangChain chain initialised  model=%s  temp=%s",
-        settings.LLM_MODEL_NAME,
+        primary_model_name(),
         settings.LLM_TEMPERATURE,
     )
     return _chain

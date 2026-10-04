@@ -87,7 +87,7 @@ pip install -r requirements.txt
 
 # 3. Configure
 cp .env.example .env
-# → Edit .env: set OPENAI_API_KEY (required)
+# → Edit .env: set LLM_API_KEY (free Groq key; the backup model reuses it)
 # → Optionally set Google Calendar variables
 # → Optionally change ADMIN_API_KEY from the default
 
@@ -189,9 +189,21 @@ BUSINESS_TIMEZONE=Asia/Karachi
 
 | Variable                      | Default                       | Description                                    |
 |-------------------------------|-------------------------------|------------------------------------------------|
-| `OPENAI_API_KEY`              | *(required)*                  | OpenAI API key                                 |
-| `LLM_MODEL_NAME`              | `gpt-4o-mini`                 | Model name                                     |
+| `LLM_API_KEY`                 | *(required)*                  | Key for the main provider (free Groq key)       |
+| `LLM_BASE_URL`                | `https://api.groq.com/openai/v1` | Any OpenAI-compatible endpoint               |
+| `LLM_MODEL_NAME`              | `openai/gpt-oss-120b`         | Main model name                                 |
+| `LLM_FALLBACK_API_KEY`        | `""`                          | Backup provider key; empty = reuse `LLM_API_KEY` on the same provider |
+| `LLM_FALLBACK_BASE_URL`       | `https://api.groq.com/openai/v1` | Backup OpenAI-compatible endpoint            |
+| `LLM_FALLBACK_MODEL_NAME`     | `openai/gpt-oss-20b`          | Backup model, used when the main one errors or is rate-limited; `none` = off |
+| `LLM_REASONING_EFFORT`        | `""`                          | `low`/`medium`/`high`; empty = `low` for gpt-oss models, not sent to others |
+| `LLM_LOCAL_BASE_URL`          | `""`                          | Last-resort backup on your own machine (Ollama: `http://localhost:11434/v1`); empty = off |
+| `LLM_LOCAL_MODEL_NAME`        | `qwen3:8b`                    | Local backup model                              |
+| `LLM_LOCAL_API_KEY`           | `ollama`                      | Any value works for Ollama                      |
+| `LLM_LOCAL_TIMEOUT_SECONDS`   | `90`                          | Local models are slower; allow longer replies   |
+| `LLM_LOCAL_SYSTEM_SUFFIX`     | `/no_think`                   | Added to the local model's prompt; stops Qwen3's slow thinking step; empty for other models |
 | `LLM_TEMPERATURE`             | `0.3`                         | Sampling temperature                           |
+| `LLM_TIMEOUT_SECONDS`         | `30`                          | Per-request timeout                            |
+| `OPENAI_API_KEY`              | `""`                          | Legacy: used with `gpt-4o-mini` only when `LLM_API_KEY` is empty |
 | `LOG_LEVEL`                   | `INFO`                        | Python log level                               |
 | `DATABASE_URL`                | `sqlite:///./receptionist.db` | Database URL (SQLite or PostgreSQL)             |
 | `ADMIN_API_KEY`               | `dev_secret_key_123`          | API key for admin dashboard endpoints          |
@@ -204,6 +216,17 @@ BUSINESS_TIMEZONE=Asia/Karachi
 | `BUSINESS_DAYS`               | `0,1,2,3,4,5`                 | Working days (0=Mon, 6=Sun)                    |
 | `BOOKING_BUFFER_MINUTES`      | `15`                          | Gap between appointments                       |
 | `DEFAULT_SLOT_WINDOW_DAYS`    | `14`                          | How far ahead to search                        |
+
+### Mac backup with Ollama (free, runs on your own machine)
+
+When both Groq models hit their free limits, Aura can answer from a model on your own Mac instead of making customers wait.
+
+1. Install Ollama from https://ollama.com/download and run `ollama pull qwen3:8b` (about 5 GB; fits a 16 GB Mac).
+2. If the backend runs on the same Mac, set `LLM_LOCAL_BASE_URL=http://localhost:11434/v1` (inside Docker: `http://host.docker.internal:11434/v1`).
+3. If the backend runs on a server, don't expose Ollama directly: it has no password, so anyone with the tunnel address could use your Mac. Run the backend on the Mac instead (step 2) and tunnel the backend (`cloudflared tunnel --url http://localhost:8000`).
+4. Keep the Mac awake and plugged in (System Settings → Battery → prevent sleeping when the display is off). If the Mac is off, Aura still runs on Groq; only the last backup is missing.
+
+A Mac handles about one conversation at a time, with replies in 5–15 seconds.
 
 ---
 
@@ -278,7 +301,7 @@ This launches:
 
 1. Connect your GitHub repository
 2. Select **Docker** as the environment
-3. Configure environment variables: `OPENAI_API_KEY`, `ADMIN_API_KEY`, `DATABASE_URL`, `GOOGLE_SERVICE_ACCOUNT_FILE`, `GOOGLE_CALENDAR_ID`
+3. Configure environment variables: `LLM_API_KEY`, `ADMIN_API_KEY`, `DATABASE_URL`, `GOOGLE_SERVICE_ACCOUNT_FILE`, `GOOGLE_CALENDAR_ID`
 4. Deploy — the Dockerfile compiles the React SPA, runs migrations, and starts the unified app
 
 ---

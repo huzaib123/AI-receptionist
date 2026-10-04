@@ -26,9 +26,40 @@ class Settings:
     """Application‑wide settings sourced from environment variables."""
 
     # ── LLM ────────────────────────────────────────────────
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME", "gpt-4o-mini")
+    # Any OpenAI-compatible endpoint works. The default is Groq's free tier
+    # (no card needed). A backup model takes over when the primary errors or
+    # hits its rate limit; by default it is a smaller Groq model on the same
+    # key, which has its own separate free quota.
+    LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
+    LLM_BASE_URL: str = os.getenv("LLM_BASE_URL") or "https://api.groq.com/openai/v1"
+    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME") or "openai/gpt-oss-120b"
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.3"))
+    LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
+
+    # Leave the key empty to reuse LLM_API_KEY when the backup is on the same
+    # provider. Set LLM_FALLBACK_MODEL_NAME=none to turn the backup off.
+    LLM_FALLBACK_API_KEY: str = os.getenv("LLM_FALLBACK_API_KEY", "")
+    LLM_FALLBACK_BASE_URL: str = os.getenv("LLM_FALLBACK_BASE_URL") or "https://api.groq.com/openai/v1"
+    LLM_FALLBACK_MODEL_NAME: str = os.getenv("LLM_FALLBACK_MODEL_NAME") or "openai/gpt-oss-20b"
+
+    # How hard reasoning models think before answering (low/medium/high).
+    # Empty means "low" for gpt-oss models, which keeps replies fast and cheap
+    # on tokens, and is not sent at all to other models.
+    LLM_REASONING_EFFORT: str = os.getenv("LLM_REASONING_EFFORT", "")
+
+    # Last-resort backup on your own machine, e.g. Ollama on a Mac:
+    #   LLM_LOCAL_BASE_URL=http://localhost:11434/v1  LLM_LOCAL_MODEL_NAME=qwen3:8b
+    # Used only after the main and backup models have both failed. Empty = off.
+    LLM_LOCAL_BASE_URL: str = os.getenv("LLM_LOCAL_BASE_URL", "")
+    LLM_LOCAL_MODEL_NAME: str = os.getenv("LLM_LOCAL_MODEL_NAME") or "qwen3:8b"
+    LLM_LOCAL_API_KEY: str = os.getenv("LLM_LOCAL_API_KEY") or "ollama"
+    LLM_LOCAL_TIMEOUT_SECONDS: float = float(os.getenv("LLM_LOCAL_TIMEOUT_SECONDS", "90"))
+    # Appended to the local model's system prompt. "/no_think" stops Qwen3
+    # from reasoning before every reply; set it empty for other local models.
+    LLM_LOCAL_SYSTEM_SUFFIX: str = os.getenv("LLM_LOCAL_SYSTEM_SUFFIX", "/no_think\n")
+
+    # Legacy: deployments configured only with OPENAI_API_KEY keep using OpenAI.
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
     # ── App ────────────────────────────────────────────────
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()

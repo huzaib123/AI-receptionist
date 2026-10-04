@@ -14,7 +14,7 @@
   box.setAttribute("aria-labelledby", "consent-title");
   box.innerHTML =
     '<h2 id="consent-title">Cookies on this site</h2>' +
-    '<p>We only use what the site needs to work. With your OK, we would also use privacy-friendly analytics to see which pages are useful. You can change this any time from the footer. <a href="privacy.html#cookies">Read the cookie policy</a>.</p>' +
+    '<p>We only use what the site needs to work. With your OK, we\'d also use privacy-friendly analytics. Change this any time from the footer. <a href="privacy.html#cookies">Cookie policy</a>.</p>' +
     '<div class="row">' +
       '<button type="button" class="btn plain small" data-v="rejected">Reject</button>' +
       '<button type="button" class="btn small" data-v="accepted">Accept</button>' +
