@@ -145,17 +145,27 @@
            "Sorry, I can only help with questions about "+cur.name+": prices, opening hours, location and bookings. If it's about us and I can't answer, I'll pass you to our team on WhatsApp.";
   }
 
-  // Hero copy follows the demo: personalised only while the visitor's own
-  // business is showing; any other tab switches back to the general copy.
+  // Hero copy follows the demo: the visitor's own business on its home tab,
+  // otherwise the chosen business type, so every tab has its own headline.
+  var HERO = {
+    clinic:["Your clinic","clinics"], dental:["Your dental clinic","dental clinics"],
+    beauty:["Your salon","salons and beauty studios"], fitness:["Your gym","gyms and fitness studios"],
+    tuition:["Your tuition centre","tuition centres and preschools"], pets:["Your vet clinic","vets and pet shops"],
+    physio:["Your physio centre","physio and wellness centres"], optical:["Your optical shop","optical shops"],
+    general:["Your business","local service businesses"], services:["Your firm","professional firms"]
+  };
   var hero = { pill: $("pill"), head: $("headline") };
   var defaults = { pill: hero.pill.textContent, head: hero.head.textContent };
-  function setHero(personal){
+  function setHero(k, personal, initial){
     if(personal){
       hero.pill.textContent = "Demo prepared for " + personalName;
       hero.head.textContent = personalName + ", open all night.";
-    } else {
+    } else if(initial && !qs.get("biz")){
       hero.pill.textContent = defaults.pill;
       hero.head.textContent = defaults.head;
+    } else {
+      hero.pill.textContent = "Live demo for " + HERO[k][1] + " in Subang Jaya and Sunway";
+      hero.head.textContent = HERO[k][0] + "'s front desk, open all night.";
     }
   }
 
@@ -164,7 +174,7 @@
     var box=$("chips"); box.innerHTML="";
     CHIPS.forEach(function(t){var b=document.createElement("button");b.className="chip";b.type="button";b.textContent=t;b.onclick=function(){send(t)};box.appendChild(b)});
   }
-  function load(k, personal){
+  function load(k, personal, initial){
     key=k; cur=P[k]; state={};
     var name = personal ? personalName : cur.name;
     $("biz-name").textContent = name;
@@ -177,7 +187,7 @@
       // On phones the tabs are one swipeable row; keep the active one visible.
       if(on){ var sw=$("switch"); if(sw.scrollWidth>sw.clientWidth) sw.scrollLeft=b.offsetLeft-20; }
     });
-    setHero(personal);
+    setHero(k, personal, initial);
   }
   function send(t){add(t,"me");botSay(reply(t))}
 
@@ -189,5 +199,5 @@
   });
   $("form").onsubmit=function(e){e.preventDefault();var t=input.value.trim();if(!t)return;input.value="";send(t)};
   chips();
-  load(key, !!personalName);
+  load(key, !!personalName, true);
 })();
